@@ -1,0 +1,28 @@
+# Dependências
+node_modules/
+spotiflow-mobile/node_modules/
+
+# Expo e Builds
+.expo/
+spotiflow-mobile/.expo/
+dist/
+web-build/
+*.orig.*
+
+# Chaves e Certificados
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Debug e Logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Sistema Operacional e IDEs
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
