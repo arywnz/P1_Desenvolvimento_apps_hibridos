@@ -8,8 +8,8 @@ import {
   Text,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Spacing, Typography } from '../../constants/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Colors, Spacing, Typography } from '../constants/theme';
 
 interface CreateOption {
   id: string;
@@ -73,21 +73,23 @@ const CREATE_OPTIONS: CreateOption[] = [
   },
 ];
 
-export default function CreateScreen() {
+export default function CreateModal() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [createdFeedback, setCreatedFeedback] = useState<string | null>(null);
 
   const handleSelectOption = (option: CreateOption) => {
     setCreatedFeedback(`Criando "${option.title}"...`);
     setTimeout(() => {
       setCreatedFeedback(null);
+      router.back();
       router.push('/(tabs)/library');
-    }, 900);
+    }, 800);
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      {/* Área superior clicável para fechar ao tocar fora */}
+    <View style={styles.overlay}>
+      {/* Área superior com backdrop escuro que fecha ao tocar fora */}
       <Pressable
         style={styles.backdrop}
         onPress={() => router.back()}
@@ -95,9 +97,13 @@ export default function CreateScreen() {
         accessibilityLabel="Fechar menu criar"
       />
 
-      {/* Container que preenche toda a metade inferior até o final da tela */}
-      <View style={styles.sheetContainer}>
-        <View style={styles.sheetContent}>
+      {/* Folha do BottomSheet que encosta até a borda inferior real da tela */}
+      <View style={[styles.sheetContainer, { paddingBottom: Math.max(insets.bottom, 16) + 12 }]}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.sheetContent}
+          bounces={false}
+        >
           {CREATE_OPTIONS.map((option) => (
             <Pressable
               key={option.id}
@@ -130,59 +136,59 @@ export default function CreateScreen() {
               </View>
             </Pressable>
           ))}
+        </ScrollView>
 
-          {/* Feedback temporário */}
-          {createdFeedback && (
-            <View style={styles.feedbackBanner}>
-              <Text style={styles.feedbackText}>{createdFeedback}</Text>
-            </View>
-          )}
-
-          {/* Botão de Fechar 'X' branco redondo */}
-          <View style={styles.bottomBar}>
-            <Pressable
-              style={styles.closeButton}
-              onPress={() => router.back()}
-              accessibilityRole="button"
-              accessibilityLabel="Fechar"
-            >
-              <SymbolView
-                name={{
-                  ios: 'xmark',
-                  android: 'close',
-                  web: 'close',
-                }}
-                size={22}
-                tintColor={Colors.background}
-                type="hierarchical"
-              />
-            </Pressable>
+        {/* Feedback visual temporário */}
+        {createdFeedback && (
+          <View style={styles.feedbackBanner}>
+            <Text style={styles.feedbackText}>{createdFeedback}</Text>
           </View>
+        )}
+
+        {/* Botão de Fechar 'X' redondo no canto inferior direito */}
+        <View style={styles.bottomBar}>
+          <Pressable
+            style={styles.closeButton}
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Fechar"
+          >
+            <SymbolView
+              name={{
+                ios: 'xmark',
+                android: 'close',
+                web: 'close',
+              }}
+              size={22}
+              tintColor="#121212"
+              type="hierarchical"
+            />
+          </Pressable>
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  overlay: {
     flex: 1,
-    backgroundColor: '#121212', // fundo escuro unificado
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     justifyContent: 'flex-end',
   },
   backdrop: {
-    flex: 1, // ocupa o topo livre para toque
+    flex: 1,
   },
   sheetContainer: {
-    backgroundColor: '#1E1E1E', // cinza escuro do painel do Spotify
+    backgroundColor: '#1E1E1E',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingTop: Spacing.md,
+    paddingTop: Spacing.lg,
     paddingHorizontal: Spacing.md,
-    paddingBottom: 24, // respiro antes da barra de navegação
   },
   sheetContent: {
     gap: Spacing.sm,
+    paddingBottom: Spacing.sm,
   },
   optionRow: {
     flexDirection: 'row',

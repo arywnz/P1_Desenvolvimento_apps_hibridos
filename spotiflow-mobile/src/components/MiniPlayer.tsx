@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
+import { useRouter, useSegments } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Colors, Spacing, Typography } from '../constants/theme';
@@ -7,9 +7,15 @@ import { usePlayer } from '../context/PlayerContext';
 
 export function MiniPlayer() {
   const router = useRouter();
+  const segments = useSegments();
   const { currentTrack, isPlaying, togglePlayPause, toggleLike, positionSeconds } = usePlayer();
 
-  if (!currentTrack) return null;
+  // Esconder o mini player na tela de Criar (Bottom Sheet) e no Player Fullscreen
+  const segmentList = segments as string[];
+  const isCreateScreen = segmentList.includes('create');
+  const isPlayerScreen = segmentList.includes('player');
+
+  if (!currentTrack || isCreateScreen || isPlayerScreen) return null;
 
   const progressPercent = (positionSeconds / (currentTrack.durationSeconds || 1)) * 100;
 

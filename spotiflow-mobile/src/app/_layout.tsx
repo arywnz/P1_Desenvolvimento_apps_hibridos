@@ -16,6 +16,14 @@ export default function RootLayout() {
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen
+          name="create-modal"
+          options={{
+            presentation: 'transparentModal',
+            animation: 'fade',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
           name="player"
           options={{
             presentation: 'modal',

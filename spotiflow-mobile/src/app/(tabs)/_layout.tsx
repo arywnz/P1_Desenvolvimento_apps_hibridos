@@ -1,5 +1,5 @@
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { View, type ColorValue } from 'react-native';
 import { Colors, Typography } from '../../constants/theme';
 import { MiniPlayer } from '../../components/MiniPlayer';
@@ -26,6 +26,7 @@ function TabIcon({
 }
 
 export default function TabsLayout() {
+  const router = useRouter();
   return (
     <View style={{ flex: 1 }}>
       <Tabs
@@ -127,6 +128,12 @@ export default function TabsLayout() {
               />
             ),
           }}
+          listeners={() => ({
+            tabPress: (e) => {
+              e.preventDefault();
+              router.push('/create-modal');
+            },
+          })}
         />
       </Tabs>
       <MiniPlayer />
