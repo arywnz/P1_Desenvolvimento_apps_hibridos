@@ -173,7 +173,7 @@ export default function CreateModal() {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    backgroundColor: 'rgba(0, 0, 0, 0.55)', // escurece levemente mantendo a tela anterior 100% visível
     justifyContent: 'flex-end',
   },
   backdrop: {

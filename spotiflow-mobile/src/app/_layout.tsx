@@ -21,6 +21,7 @@ export default function RootLayout() {
             presentation: 'transparentModal',
             animation: 'fade',
             headerShown: false,
+            contentStyle: { backgroundColor: 'transparent' },
           }}
         />
         <Stack.Screen
