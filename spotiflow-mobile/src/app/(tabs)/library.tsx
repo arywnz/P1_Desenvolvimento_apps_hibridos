@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { USER_PROFILE } from '../../constants/mockData';
+import { MOCK_PLAYLISTS, USER_PROFILE } from '../../constants/mockData';
 import { Colors, Spacing, Typography } from '../../constants/theme';
 
 const LIBRARY_FILTERS = ['Playlists', 'Baixado'];
@@ -18,6 +18,13 @@ const LIBRARY_FILTERS = ['Playlists', 'Baixado'];
 export default function LibraryScreen() {
   const router = useRouter();
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+
+  const displayedPlaylists = MOCK_PLAYLISTS.filter((playlist) => {
+    if (selectedFilter === 'Baixado') {
+      return playlist.isDownloaded;
+    }
+    return true;
+  });
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -140,6 +147,84 @@ export default function LibraryScreen() {
             />
           </Pressable>
         </View>
+
+        {/* Lista de Playlists e Músicas Curtidas */}
+        <View style={styles.playlistList}>
+          {displayedPlaylists.map((playlist) => (
+            <Pressable
+              key={playlist.id}
+              style={styles.playlistItem}
+              onPress={() =>
+                router.push({
+                  pathname: '/playlist/[id]',
+                  params: { id: playlist.id },
+                })
+              }
+              accessibilityRole="button"
+              accessibilityLabel={`Abrir playlist ${playlist.title}`}
+            >
+              <Image
+                source={{ uri: playlist.coverUrl }}
+                style={styles.playlistCover}
+                contentFit="cover"
+              />
+
+              <View style={styles.playlistInfo}>
+                <Text
+                  style={[
+                    styles.playlistTitle,
+                    playlist.id === 'echos-of-us' && styles.playlistTitleGreen,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {playlist.title}
+                </Text>
+
+                <View style={styles.playlistMetaRow}>
+                  {playlist.isPinned && (
+                    <SymbolView
+                      name={{
+                        ios: 'pin.fill',
+                        android: 'push_pin',
+                        web: 'push_pin',
+                      }}
+                      size={13}
+                      tintColor={Colors.primary}
+                      type="hierarchical"
+                    />
+                  )}
+                  {playlist.isMixed && (
+                    <SymbolView
+                      name={{
+                        ios: 'slider.horizontal.3',
+                        android: 'tune',
+                        web: 'tune',
+                      }}
+                      size={13}
+                      tintColor={Colors.textSecondary}
+                      type="hierarchical"
+                    />
+                  )}
+                  {playlist.isDownloaded && (
+                    <SymbolView
+                      name={{
+                        ios: 'arrow.down.circle.fill',
+                        android: 'download_for_offline',
+                        web: 'download_for_offline',
+                      }}
+                      size={13}
+                      tintColor={Colors.primary}
+                      type="hierarchical"
+                    />
+                  )}
+                  <Text style={styles.playlistSubtitle} numberOfLines={1}>
+                    {playlist.subtitle}
+                  </Text>
+                </View>
+              </View>
+            </Pressable>
+          ))}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -217,6 +302,44 @@ const styles = StyleSheet.create({
   sortText: {
     ...Typography.bodyMedium,
     fontWeight: '700',
+    fontSize: 13,
+  },
+  playlistList: {
+    gap: Spacing.sm,
+  },
+  playlistItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  playlistCover: {
+    width: 64,
+    height: 64,
+    borderRadius: 4,
+    backgroundColor: Colors.surfaceCard,
+  },
+  playlistInfo: {
+    flex: 1,
+    marginLeft: Spacing.md,
+    justifyContent: 'center',
+  },
+  playlistTitle: {
+    ...Typography.bodyMedium,
+    fontWeight: '700',
+    fontSize: 15,
+    marginBottom: 4,
+  },
+  playlistTitleGreen: {
+    color: Colors.primary,
+  },
+  playlistMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  playlistSubtitle: {
+    ...Typography.bodySmall,
+    color: Colors.textSecondary,
     fontSize: 13,
   },
 });
