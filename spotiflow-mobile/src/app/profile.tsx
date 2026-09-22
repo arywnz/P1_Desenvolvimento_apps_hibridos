@@ -16,6 +16,14 @@ import {
 } from '../constants/mockData';
 import { Colors, Spacing, Typography } from '../constants/theme';
 
+const FRIEND_PLAYLISTS = FRIENDS_ACTIVITY.flatMap((friend) =>
+  friend.playlists.map((playlist) => ({
+    friendId: friend.id,
+    friendName: friend.name,
+    playlist,
+  }))
+);
+
 export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -285,6 +293,53 @@ export default function ProfileScreen() {
           </ScrollView>
         </View>
 
+        <View style={styles.friendPlaylistsSection}>
+          <Text style={styles.friendPlaylistsTitle}>Playlists dos amigos</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.friendPlaylistList}
+          >
+            {FRIEND_PLAYLISTS.map(({ friendId, friendName, playlist }) => (
+              <Pressable
+                key={`${friendId}-${playlist.id}`}
+                style={styles.friendPlaylistCard}
+                onPress={() =>
+                  router.push({
+                    pathname: '/playlist/[id]',
+                    params: { id: playlist.id },
+                  })
+                }
+                accessibilityRole="button"
+                accessibilityLabel={`Abrir playlist ${playlist.title} de ${friendName}`}
+              >
+                <Image
+                  source={{ uri: playlist.coverUrl }}
+                  style={styles.friendPlaylistCover}
+                  contentFit="cover"
+                />
+                <Text style={styles.friendPlaylistName} numberOfLines={2}>
+                  {playlist.title}
+                </Text>
+                <Pressable
+                  onPress={() =>
+                    router.push({
+                      pathname: '/friend-profile',
+                      params: { id: friendId },
+                    })
+                  }
+                  accessibilityRole="button"
+                  accessibilityLabel={`Ver perfil de ${friendName}`}
+                >
+                  <Text style={styles.friendPlaylistOwner} numberOfLines={1}>
+                    De {friendName}
+                  </Text>
+                </Pressable>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+
         {/* Seção de Mensagens */}
         <View style={styles.messagesSection}>
           <View style={styles.messagesHeader}>
@@ -505,6 +560,39 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: Colors.textSecondary,
     textAlign: 'center',
+  },
+  friendPlaylistsSection: {
+    marginTop: Spacing.md,
+  },
+  friendPlaylistsTitle: {
+    ...Typography.titleMedium,
+    fontSize: 18,
+    fontWeight: '800',
+    marginBottom: Spacing.md,
+  },
+  friendPlaylistList: {
+    gap: Spacing.md,
+    paddingRight: Spacing.md,
+  },
+  friendPlaylistCard: {
+    width: 130,
+  },
+  friendPlaylistCover: {
+    width: 130,
+    height: 130,
+    borderRadius: 6,
+    marginBottom: Spacing.sm,
+    backgroundColor: Colors.surfaceCard,
+  },
+  friendPlaylistName: {
+    ...Typography.bodyMedium,
+    fontWeight: '700',
+    fontSize: 13,
+    marginBottom: 2,
+  },
+  friendPlaylistOwner: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
   },
   messagesSection: {
     marginTop: Spacing.md,
