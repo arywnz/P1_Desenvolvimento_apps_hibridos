@@ -165,32 +165,45 @@ export default function FriendProfileScreen() {
         {/* Playlists Públicas Exclusivas do Amigo */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Playlists públicas</Text>
-          <View style={styles.playlistGrid}>
-            {friend.playlists.map((playlist) => (
-              <Pressable
-                key={playlist.id}
-                style={styles.playlistCard}
-                onPress={() =>
-                  router.push({
-                    pathname: '/playlist/[id]',
-                    params: { id: playlist.id },
-                  })
-                }
-              >
-                <Image
-                  source={{ uri: playlist.coverUrl }}
-                  style={styles.playlistCover}
-                  contentFit="cover"
-                />
-                <Text style={styles.playlistTitle} numberOfLines={1}>
-                  {playlist.title}
-                </Text>
-                <Text style={styles.playlistSubtitle} numberOfLines={1}>
-                  {playlist.tracksCount} faixas • De {friend.name}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.playlistGrid}
+          >
+            {friend.playlists.map((playlist) => {
+              const firstTrack = playlist.tracks[0];
+
+              return (
+                <Pressable
+                  key={playlist.id}
+                  style={styles.playlistCard}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/playlist/[id]',
+                      params: { id: playlist.id },
+                    })
+                  }
+                >
+                  <Image
+                    source={{ uri: playlist.coverUrl }}
+                    style={styles.playlistCover}
+                    contentFit="cover"
+                  />
+                  <Text style={styles.playlistTitle} numberOfLines={1}>
+                    {playlist.title}
+                  </Text>
+                  <Text style={styles.playlistSubtitle} numberOfLines={1}>
+                    {playlist.tracksCount} faixas • De {friend.name}
+                  </Text>
+                  {firstTrack && (
+                    <Text style={styles.playlistPreview} numberOfLines={1}>
+                      Comeca com {firstTrack.title}
+                    </Text>
+                  )}
+                </Pressable>
+              );
+            })}
+          </ScrollView>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -365,6 +378,7 @@ const styles = StyleSheet.create({
   playlistGrid: {
     flexDirection: 'row',
     gap: Spacing.md,
+    paddingRight: Spacing.md,
   },
   playlistCard: {
     width: 140,
@@ -384,5 +398,10 @@ const styles = StyleSheet.create({
   playlistSubtitle: {
     ...Typography.caption,
     color: Colors.textSecondary,
+  },
+  playlistPreview: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    marginTop: 2,
   },
 });
