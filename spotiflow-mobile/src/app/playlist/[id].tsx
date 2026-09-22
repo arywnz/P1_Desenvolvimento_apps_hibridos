@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MOCK_PLAYLISTS, Track } from '../../constants/mockData';
+import { FRIENDS_ACTIVITY, MOCK_PLAYLISTS, Track } from '../../constants/mockData';
 import { Colors, Spacing, Typography } from '../../constants/theme';
 import { usePlayer } from '../../context/PlayerContext';
 
@@ -19,9 +19,14 @@ export default function PlaylistDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { playTrack, currentTrack, isPlaying, togglePlayPause } = usePlayer();
 
-  // Encontra a playlist mockada ou usa a primeira como fallback
+  // Junta todas as playlists (do usuário e dos amigos) para achar pelo ID
+  const allPlaylists = [
+    ...MOCK_PLAYLISTS,
+    ...FRIENDS_ACTIVITY.flatMap((f) => f.playlists),
+  ];
+
   const playlist =
-    MOCK_PLAYLISTS.find((p) => p.id === id) || MOCK_PLAYLISTS[0];
+    allPlaylists.find((p) => p.id === id) || MOCK_PLAYLISTS[0];
 
   const [isSaved, setIsSaved] = useState(false);
 

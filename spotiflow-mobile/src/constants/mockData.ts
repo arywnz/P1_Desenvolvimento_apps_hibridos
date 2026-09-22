@@ -41,6 +41,7 @@ export interface FriendActivity {
   currentTrack?: string;
   currentArtist?: string;
   lastActive: string;
+  playlists: Playlist[];
 }
 
 export interface ChatMessage {
@@ -72,7 +73,7 @@ export const CURRENT_TRACK: Track = {
   liked: true,
 };
 
-// Playlists da Home e Biblioteca
+// Playlists da Home e Biblioteca do usuário principal (Jão)
 export const MOCK_PLAYLISTS: Playlist[] = [
   {
     id: 'echos-of-us',
@@ -126,7 +127,28 @@ export const MOCK_PLAYLISTS: Playlist[] = [
     isPinned: true,
     isDownloaded: true,
     tracksCount: 24,
-    tracks: [],
+    tracks: [
+      {
+        id: 'track-peace-1',
+        title: 'Vento no Litoral',
+        artist: 'Legião Urbana',
+        album: 'V',
+        duration: '6:06',
+        durationSeconds: 366,
+        coverUrl: 'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?w=400&q=80',
+        liked: true,
+      },
+      {
+        id: 'track-peace-2',
+        title: 'Como Nossos Pais',
+        artist: 'Elis Regina',
+        album: 'Falso Brilhante',
+        duration: '4:40',
+        durationSeconds: 280,
+        coverUrl: 'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?w=400&q=80',
+        liked: true,
+      },
+    ],
   },
   {
     id: 'on-my-mind',
@@ -190,7 +212,7 @@ export const USER_PROFILE = {
   avatarUrl: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=200&q=80',
 };
 
-// Amigos e Atividades (nomes normais e reais)
+// Amigos e Atividades com Playlists Exclusivas e Diferenciadas
 export const FRIENDS_ACTIVITY: FriendActivity[] = [
   {
     id: 'friend-1',
@@ -199,14 +221,157 @@ export const FRIENDS_ACTIVITY: FriendActivity[] = [
     currentTrack: 'sangrar',
     currentArtist: 'Arthur',
     lastActive: 'Ouvindo agora',
+    playlists: [
+      {
+        id: 'gabi-indie-vibes',
+        title: 'Indie & Sad Girl',
+        subtitle: 'Playlist • Gabriela',
+        author: 'Gabriela',
+        coverUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80',
+        tracksCount: 28,
+        tracks: [
+          {
+            id: 'gabi-1',
+            title: 'sangrar',
+            artist: 'Arthur',
+            album: 'Coração Partido',
+            duration: '3:15',
+            durationSeconds: 195,
+            coverUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80',
+            liked: false,
+          },
+          {
+            id: 'gabi-2',
+            title: 'Cardigan',
+            artist: 'Taylor Swift',
+            album: 'folklore',
+            duration: '3:59',
+            durationSeconds: 239,
+            coverUrl: 'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?w=400&q=80',
+            liked: true,
+          },
+          {
+            id: 'gabi-3',
+            title: 'Video Games',
+            artist: 'Lana Del Rey',
+            album: 'Born to Die',
+            duration: '4:42',
+            durationSeconds: 282,
+            coverUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80',
+            liked: true,
+          },
+        ],
+      },
+      {
+        id: 'gabi-pop-hits',
+        title: 'Acoustic Sunday',
+        subtitle: 'Playlist • Gabriela',
+        author: 'Gabriela',
+        coverUrl: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&q=80',
+        tracksCount: 19,
+        tracks: [],
+      },
+    ],
   },
   {
     id: 'friend-2',
-    name: 'João Victor',
+    name: 'Márcio Garrido',
     avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&q=80',
-    currentTrack: 'Lucia',
-    currentArtist: 'Milo J',
-    lastActive: 'Há 12 min',
+    currentTrack: 'Back in Black',
+    currentArtist: 'AC/DC',
+    lastActive: 'Ouvindo no talo',
+    playlists: [
+      {
+        id: 'garrido-hard-rock',
+        title: 'Hard Rock Classics',
+        subtitle: 'Playlist • Márcio Garrido',
+        author: 'Márcio Garrido',
+        coverUrl: 'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=400&q=80',
+        tracksCount: 45,
+        tracks: [
+          {
+            id: 'rock-1',
+            title: 'Back in Black',
+            artist: 'AC/DC',
+            album: 'Back in Black',
+            duration: '4:15',
+            durationSeconds: 255,
+            coverUrl: 'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=400&q=80',
+            liked: true,
+          },
+          {
+            id: 'rock-2',
+            title: 'Highway to Hell',
+            artist: 'AC/DC',
+            album: 'Highway to Hell',
+            duration: '3:28',
+            durationSeconds: 208,
+            coverUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&q=80',
+            liked: true,
+          },
+          {
+            id: 'rock-3',
+            title: 'Thunderstruck',
+            artist: 'AC/DC',
+            album: 'The Razors Edge',
+            duration: '4:52',
+            durationSeconds: 292,
+            coverUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&q=80',
+            liked: true,
+          },
+          {
+            id: 'rock-4',
+            title: 'Sweet Child O\' Mine',
+            artist: 'Guns N\' Roses',
+            album: 'Appetite for Destruction',
+            duration: '5:56',
+            durationSeconds: 356,
+            coverUrl: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400&q=80',
+            liked: true,
+          },
+          {
+            id: 'rock-5',
+            title: 'Smoke on the Water',
+            artist: 'Deep Purple',
+            album: 'Machine Head',
+            duration: '5:40',
+            durationSeconds: 340,
+            coverUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&q=80',
+            liked: true,
+          },
+        ],
+      },
+      {
+        id: 'garrido-metal-workout',
+        title: 'Heavy Metal & Code',
+        subtitle: 'Playlist • Márcio Garrido',
+        author: 'Márcio Garrido',
+        coverUrl: 'https://images.unsplash.com/photo-1464375117522-1311d6a5b81f?w=400&q=80',
+        tracksCount: 60,
+        tracks: [
+          {
+            id: 'metal-1',
+            title: 'Master of Puppets',
+            artist: 'Metallica',
+            album: 'Master of Puppets',
+            duration: '8:35',
+            durationSeconds: 515,
+            coverUrl: 'https://images.unsplash.com/photo-1464375117522-1311d6a5b81f?w=400&q=80',
+            liked: true,
+          },
+          {
+            id: 'metal-2',
+            title: 'The Trooper',
+            artist: 'Iron Maiden',
+            album: 'Piece of Mind',
+            duration: '4:11',
+            durationSeconds: 251,
+            coverUrl: 'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=400&q=80',
+            liked: true,
+          },
+        ],
+      },
+    ],
   },
   {
     id: 'friend-3',
@@ -215,12 +380,68 @@ export const FRIENDS_ACTIVITY: FriendActivity[] = [
     currentTrack: 'SaWaDiKa',
     currentArtist: 'Fic',
     lastActive: 'Há 1h',
+    playlists: [
+      {
+        id: 'camila-lofi-beats',
+        title: 'Lo-Fi Study Beats',
+        subtitle: 'Playlist • Camila',
+        author: 'Camila',
+        coverUrl: 'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?w=400&q=80',
+        tracksCount: 35,
+        tracks: [
+          {
+            id: 'camila-1',
+            title: 'SaWaDiKa',
+            artist: 'Fic',
+            album: 'Oriental Moods',
+            duration: '2:40',
+            durationSeconds: 160,
+            coverUrl: 'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?w=400&q=80',
+            liked: false,
+          },
+          {
+            id: 'camila-2',
+            title: 'Coffee in Rain',
+            artist: 'Chilled Cow',
+            album: 'Lofi Sessions',
+            duration: '2:12',
+            durationSeconds: 132,
+            coverUrl: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&q=80',
+            liked: true,
+          },
+        ],
+      },
+    ],
   },
   {
     id: 'friend-4',
     name: 'Lucas Ferreira',
     avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&q=80',
+    currentTrack: 'Evidências',
+    currentArtist: 'Chitãozinho & Xororó',
     lastActive: 'Ativado',
+    playlists: [
+      {
+        id: 'lucas-sertanejo',
+        title: 'Sertanejo Raiz',
+        subtitle: 'Playlist • Lucas Ferreira',
+        author: 'Lucas Ferreira',
+        coverUrl: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=400&q=80',
+        tracksCount: 52,
+        tracks: [
+          {
+            id: 'lucas-1',
+            title: 'Evidências',
+            artist: 'Chitãozinho & Xororó',
+            album: 'Cowboy do Asfalto',
+            duration: '4:39',
+            durationSeconds: 279,
+            coverUrl: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=400&q=80',
+            liked: true,
+          },
+        ],
+      },
+    ],
   },
 ];
 

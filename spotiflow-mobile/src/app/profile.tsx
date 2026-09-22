@@ -65,7 +65,12 @@ export default function ProfileScreen() {
 
         {/* Lista de Ações da Conta */}
         <View style={styles.menuSection}>
-          <Pressable style={styles.menuRow} accessibilityRole="button">
+          <Pressable
+            style={styles.menuRow}
+            onPress={() => router.push({ pathname: '/account', params: { type: 'add-account' } })}
+            accessibilityRole="button"
+            accessibilityLabel="Adicionar conta"
+          >
             <SymbolView
               name={{
                 ios: 'plus',
@@ -82,10 +87,25 @@ export default function ProfileScreen() {
                 Adicionar uma criança ou outra pessoa
               </Text>
             </View>
+            <SymbolView
+              name={{
+                ios: 'chevron.forward',
+                android: 'chevron_right',
+                web: 'chevron_right',
+              }}
+              size={18}
+              tintColor={Colors.textSecondary}
+              type="hierarchical"
+            />
           </Pressable>
 
           {/* Badge de Assinatura Premium Universitário */}
-          <Pressable style={styles.menuRow} accessibilityRole="button">
+          <Pressable
+            style={styles.menuRow}
+            onPress={() => router.push({ pathname: '/account', params: { type: 'premium' } })}
+            accessibilityRole="button"
+            accessibilityLabel="Seu Premium"
+          >
             <SymbolView
               name={{
                 ios: 'sparkles',
@@ -104,7 +124,12 @@ export default function ProfileScreen() {
             </View>
           </Pressable>
 
-          <Pressable style={styles.menuRow} accessibilityRole="button">
+          <Pressable
+            style={styles.menuRow}
+            onPress={() => router.push({ pathname: '/account', params: { type: 'stats' } })}
+            accessibilityRole="button"
+            accessibilityLabel="Estatísticas Musicais"
+          >
             <SymbolView
               name={{
                 ios: 'chart.xyaxis.line',
@@ -118,9 +143,24 @@ export default function ProfileScreen() {
             <View style={styles.menuTextGroup}>
               <Text style={styles.menuTitle}>Estatísticas Musicais</Text>
             </View>
+            <SymbolView
+              name={{
+                ios: 'chevron.forward',
+                android: 'chevron_right',
+                web: 'chevron_right',
+              }}
+              size={18}
+              tintColor={Colors.textSecondary}
+              type="hierarchical"
+            />
           </Pressable>
 
-          <Pressable style={styles.menuRow} accessibilityRole="button">
+          <Pressable
+            style={styles.menuRow}
+            onPress={() => router.push({ pathname: '/account', params: { type: 'recents' } })}
+            accessibilityRole="button"
+            accessibilityLabel="Recentes"
+          >
             <SymbolView
               name={{
                 ios: 'clock',
@@ -134,9 +174,24 @@ export default function ProfileScreen() {
             <View style={styles.menuTextGroup}>
               <Text style={styles.menuTitle}>Recentes</Text>
             </View>
+            <SymbolView
+              name={{
+                ios: 'chevron.forward',
+                android: 'chevron_right',
+                web: 'chevron_right',
+              }}
+              size={18}
+              tintColor={Colors.textSecondary}
+              type="hierarchical"
+            />
           </Pressable>
 
-          <Pressable style={styles.menuRow} accessibilityRole="button">
+          <Pressable
+            style={styles.menuRow}
+            onPress={() => router.push({ pathname: '/account', params: { type: 'updates' } })}
+            accessibilityRole="button"
+            accessibilityLabel="Suas atualizações"
+          >
             <SymbolView
               name={{
                 ios: 'megaphone',
@@ -150,6 +205,16 @@ export default function ProfileScreen() {
             <View style={styles.menuTextGroup}>
               <Text style={styles.menuTitle}>Suas atualizações</Text>
             </View>
+            <SymbolView
+              name={{
+                ios: 'chevron.forward',
+                android: 'chevron_right',
+                web: 'chevron_right',
+              }}
+              size={18}
+              tintColor={Colors.textSecondary}
+              type="hierarchical"
+            />
           </Pressable>
 
           <Pressable
@@ -184,7 +249,7 @@ export default function ProfileScreen() {
           </Pressable>
         </View>
 
-        {/* Carrossel de Atividade de Amigos (Nomes Reais/Normais) */}
+        {/* Carrossel de Atividade de Amigos (Nomes Reais/Normais) Clicáveis */}
         <View style={styles.friendsSection}>
           <ScrollView
             horizontal
@@ -192,7 +257,18 @@ export default function ProfileScreen() {
             contentContainerStyle={styles.friendsList}
           >
             {FRIENDS_ACTIVITY.map((friend) => (
-              <View key={friend.id} style={styles.friendCard}>
+              <Pressable
+                key={friend.id}
+                style={styles.friendCard}
+                onPress={() =>
+                  router.push({
+                    pathname: '/friend-profile',
+                    params: { id: friend.id },
+                  })
+                }
+                accessibilityRole="button"
+                accessibilityLabel={`Ver perfil de ${friend.name}`}
+              >
                 <Image
                   source={{ uri: friend.avatarUrl }}
                   style={styles.friendAvatar}
@@ -204,7 +280,7 @@ export default function ProfileScreen() {
                 <Text style={styles.friendTrack} numberOfLines={1}>
                   {friend.currentTrack || friend.lastActive}
                 </Text>
-              </View>
+              </Pressable>
             ))}
           </ScrollView>
         </View>
