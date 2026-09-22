@@ -1,56 +1,40 @@
-# Welcome to your Expo app 👋
+# Spotiflow Mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicativo hibrido feito em Expo Router, inspirado no fluxo visual do Spotify. O projeto usa dados mockados, navegacao por abas, rotas dinamicas e estado global de player.
 
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Como rodar
 
 ```bash
-npm run reset-project
+npm install
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Depois, abrir no Expo Go, emulador Android/iOS ou navegador.
 
-### Other setup steps
+## Navegacao principal
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+- Inicio: feed com filtros, atalhos, tocadas recentemente, DJ personalizado e mixes recomendados.
+- Buscar: barra de pesquisa, estado local e categorias coloridas.
+- Sua Biblioteca: filtros, ordenacao, playlists e atalho de criacao.
+- Criar: modal/bottom sheet com opcoes de playlist, match e jam.
+- Playlist: tela dinamica com capa, play, lista de faixas e acoes.
+- Player: modal em tela cheia com capa, progresso e controles.
+- Perfil: amigos ativos, mensagens e informacoes da conta.
+- Configuracoes: switches de reproducao, economia de dados e privacidade.
+- Chat: conversa direta com envio de mensagens e card de musica compartilhada.
+- Perfil do amigo: atividade atual e playlists exclusivas de cada amigo.
 
-## Learn more
+## Interacoes importantes
 
-To learn more about developing your project with Expo, look at the following resources:
+- Tocar na foto de perfil na Home ou na Biblioteca abre Configuracoes.
+- Dentro de Configuracoes, a opcao "Perfil do usuario" abre a tela de Perfil.
+- Tocar em playlists abre a rota dinamica de detalhes.
+- Tocar em faixas ou cards de musica atualiza o player global.
+- Tocar em amigos abre o perfil do amigo com playlists proprias.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Requisitos atendidos
 
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Mais de 6 telas navegaveis.
+- Mais de 20 commits no historico.
+- Projeto Expo limpo, com `node_modules/` protegido pelo `.gitignore`.
+- Dados mockados com nomes realistas e playlists diferentes por usuario.
