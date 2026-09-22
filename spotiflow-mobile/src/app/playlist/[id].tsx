@@ -153,9 +153,75 @@ export default function PlaylistDetailScreen() {
           </Pressable>
         </View>
 
-        {/* Espaço reservado para a lista de faixas */}
-        <View style={styles.trackListHeader}>
-          <Text style={styles.sectionHeading}>Faixas em destaque</Text>
+        {/* Lista de Faixas da Playlist */}
+        <View style={styles.trackList}>
+          {playlist.tracks.map((track, index) => {
+            const isThisTrackPlaying = isPlaying && currentTrack?.id === track.id;
+            const isThisTrackSelected = currentTrack?.id === track.id;
+
+            return (
+              <Pressable
+                key={track.id}
+                style={[
+                  styles.trackRow,
+                  isThisTrackSelected && styles.trackRowSelected,
+                ]}
+                onPress={() => playTrack(track)}
+                accessibilityRole="button"
+                accessibilityLabel={`Tocar ${track.title} de ${track.artist}`}
+              >
+                <Text
+                  style={[
+                    styles.trackIndex,
+                    isThisTrackSelected && styles.trackIndexActive,
+                  ]}
+                >
+                  {index + 1}
+                </Text>
+
+                <Image
+                  source={{ uri: track.coverUrl }}
+                  style={styles.trackThumb}
+                  contentFit="cover"
+                />
+
+                <View style={styles.trackInfo}>
+                  <Text
+                    style={[
+                      styles.trackTitle,
+                      isThisTrackSelected && styles.trackTitleActive,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {track.title}
+                  </Text>
+                  <Text style={styles.trackArtist} numberOfLines={1}>
+                    {track.artist}
+                  </Text>
+                </View>
+
+                <Text style={styles.trackDuration}>{track.duration}</Text>
+
+                <Pressable
+                  hitSlop={8}
+                  style={styles.trackMoreButton}
+                  accessibilityRole="button"
+                  accessibilityLabel="Opções da faixa"
+                >
+                  <SymbolView
+                    name={{
+                      ios: 'ellipsis',
+                      android: 'more_vert',
+                      web: 'more_vert',
+                    }}
+                    size={20}
+                    tintColor={Colors.textSecondary}
+                    type="hierarchical"
+                  />
+                </Pressable>
+              </Pressable>
+            );
+          })}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -247,14 +313,61 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 8,
   },
-  trackListHeader: {
+  trackList: {
+    gap: Spacing.sm,
     marginTop: Spacing.sm,
   },
-  sectionHeading: {
-    ...Typography.titleMedium,
+  trackRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  trackRowSelected: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  trackIndex: {
+    ...Typography.bodyMedium,
     color: Colors.textSecondary,
+    width: 28,
+    textAlign: 'center',
+  },
+  trackIndexActive: {
+    color: Colors.primary,
+    fontWeight: '700',
+  },
+  trackThumb: {
+    width: 44,
+    height: 44,
+    borderRadius: 4,
+    backgroundColor: Colors.surfaceCard,
+    marginLeft: 4,
+  },
+  trackInfo: {
+    flex: 1,
+    marginLeft: Spacing.md,
+    justifyContent: 'center',
+  },
+  trackTitle: {
+    ...Typography.bodyMedium,
+    fontWeight: '700',
     fontSize: 14,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    marginBottom: 2,
+  },
+  trackTitleActive: {
+    color: Colors.primary,
+  },
+  trackArtist: {
+    ...Typography.bodySmall,
+    color: Colors.textSecondary,
+    fontSize: 12,
+  },
+  trackDuration: {
+    ...Typography.bodySmall,
+    color: Colors.textMuted,
+    marginRight: Spacing.md,
+  },
+  trackMoreButton: {
+    padding: Spacing.xs,
   },
 });
