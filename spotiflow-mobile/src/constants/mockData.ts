@@ -174,8 +174,8 @@ export const MOCK_PLAYLISTS: Playlist[] = [
   {
     id: 'liked-songs',
     title: 'Músicas curtidas',
-    subtitle: 'Playlist • 8 músicas',
-    author: 'Jão',
+    subtitle: 'Playlist • Shtorache',
+    author: 'Shtorache',
     coverUrl: 'https://images.unsplash.com/photo-1499415479124-43c32433a620?w=400&q=80',
     isDownloaded: true,
     tracksCount: 8,
@@ -288,7 +288,7 @@ export const SEARCH_CATEGORIES: Category[] = [
 
 // Usuário logado
 export const USER_PROFILE = {
-  name: 'Jão',
+  name: 'Shtorache',
   plan: 'Universitário',
   avatarUrl: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=200&q=80',
 };
