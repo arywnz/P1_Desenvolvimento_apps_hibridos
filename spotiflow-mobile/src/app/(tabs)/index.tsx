@@ -35,9 +35,9 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <View style={styles.profileGroup}>
             <Pressable
-              onPress={() => router.push('/profile')}
+              onPress={() => router.push('/settings')}
               accessibilityRole="button"
-              accessibilityLabel="Abrir perfil"
+              accessibilityLabel="Abrir configuracoes"
             >
               <Image
                 source={{ uri: USER_PROFILE.avatarUrl }}

@@ -55,6 +55,27 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionHeader}>Conta</Text>
           <View style={styles.card}>
+            <Pressable
+              style={styles.rowAction}
+              onPress={() => router.push('/profile')}
+              accessibilityRole="button"
+              accessibilityLabel="Ver perfil do usuario"
+            >
+              <View style={styles.rowTextGroup}>
+                <Text style={styles.rowTitle}>Perfil do usuario</Text>
+                <Text style={styles.rowSubtitle}>Ver amigos, mensagens e atividade recente</Text>
+              </View>
+              <SymbolView
+                name={{
+                  ios: 'chevron.forward',
+                  android: 'chevron_right',
+                  web: 'chevron_right',
+                }}
+                size={18}
+                tintColor={Colors.textSecondary}
+                type="hierarchical"
+              />
+            </Pressable>
             <View style={styles.row}>
               <View style={styles.rowTextGroup}>
                 <Text style={styles.rowTitle}>E-mail</Text>
@@ -228,6 +249,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
   },
   row: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  rowAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.05)',

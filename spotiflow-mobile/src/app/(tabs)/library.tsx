@@ -36,9 +36,9 @@ export default function LibraryScreen() {
         {/* Cabeçalho da Biblioteca */}
         <View style={styles.header}>
           <Pressable
-            onPress={() => router.push('/profile')}
+            onPress={() => router.push('/settings')}
             accessibilityRole="button"
-            accessibilityLabel="Abrir perfil"
+            accessibilityLabel="Abrir configuracoes"
           >
             <Image
               source={{ uri: USER_PROFILE.avatarUrl }}
