@@ -1,3 +1,5 @@
+import type { ImageSourcePropType } from 'react-native';
+
 /**
  * Dados simulados (mock) para a aplicação Spotiflow
  * Baseado fielmente nos elementos de tela do Spotify
@@ -38,6 +40,7 @@ export interface FriendActivity {
   id: string;
   name: string;
   avatarUrl: string;
+  avatarSource?: ImageSourcePropType;
   currentTrack?: string;
   currentArtist?: string;
   lastActive: string;
@@ -389,6 +392,7 @@ export const FRIENDS_ACTIVITY: FriendActivity[] = [
     id: 'friend-2',
     name: 'Márcio Garrido',
     avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&q=80',
+    avatarSource: require('../../assets/images/marcio-garrido.png'),
     currentTrack: 'Back in Black',
     currentArtist: 'AC/DC',
     lastActive: 'Ouvindo no talo',

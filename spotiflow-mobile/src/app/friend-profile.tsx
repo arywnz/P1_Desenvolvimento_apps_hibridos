@@ -62,7 +62,7 @@ export default function FriendProfileScreen() {
         {/* Banner do Perfil do Amigo */}
         <View style={styles.profileHero}>
           <Image
-            source={{ uri: friend.avatarUrl }}
+            source={friend.avatarSource ?? { uri: friend.avatarUrl }}
             style={styles.heroAvatar}
             contentFit="cover"
           />

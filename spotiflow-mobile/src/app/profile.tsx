@@ -278,7 +278,7 @@ export default function ProfileScreen() {
                 accessibilityLabel={`Ver perfil de ${friend.name}`}
               >
                 <Image
-                  source={{ uri: friend.avatarUrl }}
+                  source={friend.avatarSource ?? { uri: friend.avatarUrl }}
                   style={styles.friendAvatar}
                   contentFit="cover"
                 />
