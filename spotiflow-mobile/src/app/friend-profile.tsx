@@ -22,6 +22,9 @@ export default function FriendProfileScreen() {
 
   const friend =
     FRIENDS_ACTIVITY.find((f) => f.id === id) || FRIENDS_ACTIVITY[0];
+  const previewTracks = friend.playlists
+    .flatMap((playlist) => playlist.tracks)
+    .slice(0, 5);
 
   const [isFollowing, setIsFollowing] = useState(false);
 
@@ -113,6 +116,48 @@ export default function FriendProfileScreen() {
                   type="hierarchical"
                 />
               </Pressable>
+            </View>
+          </View>
+        )}
+
+        {previewTracks.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Musicas do amigo</Text>
+            <View style={styles.trackPreviewList}>
+              {previewTracks.map((track) => (
+                <Pressable
+                  key={track.id}
+                  style={styles.trackPreviewRow}
+                  onPress={() => playTrack(track)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Tocar ${track.title} de ${track.artist}`}
+                >
+                  <Image
+                    source={{ uri: track.coverUrl }}
+                    style={styles.trackPreviewCover}
+                    contentFit="cover"
+                  />
+                  <View style={styles.trackPreviewTextGroup}>
+                    <Text style={styles.trackPreviewTitle} numberOfLines={1}>
+                      {track.title}
+                    </Text>
+                    <Text style={styles.trackPreviewArtist} numberOfLines={1}>
+                      {track.artist}
+                    </Text>
+                  </View>
+                  <Text style={styles.trackPreviewDuration}>{track.duration}</Text>
+                  <SymbolView
+                    name={{
+                      ios: 'play.circle.fill',
+                      android: 'play_circle',
+                      web: 'play_circle',
+                    }}
+                    size={28}
+                    tintColor={Colors.primary}
+                    type="hierarchical"
+                  />
+                </Pressable>
+              ))}
             </View>
           </View>
         )}
@@ -279,6 +324,43 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...Typography.titleMedium,
     fontSize: 16,
+  },
+  trackPreviewList: {
+    gap: Spacing.xs,
+  },
+  trackPreviewRow: {
+    minHeight: 58,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 6,
+    backgroundColor: Colors.surfaceCard,
+  },
+  trackPreviewCover: {
+    width: 44,
+    height: 44,
+    borderRadius: 4,
+    backgroundColor: Colors.backgroundCard,
+  },
+  trackPreviewTextGroup: {
+    flex: 1,
+    marginLeft: Spacing.sm,
+  },
+  trackPreviewTitle: {
+    ...Typography.bodyMedium,
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  trackPreviewArtist: {
+    ...Typography.bodySmall,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  trackPreviewDuration: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    marginRight: Spacing.sm,
   },
   playlistGrid: {
     flexDirection: 'row',
