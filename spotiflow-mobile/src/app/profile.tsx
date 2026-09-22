@@ -59,7 +59,7 @@ export default function ProfileScreen() {
         {/* Cabeçalho do Perfil (Avatar, Nome Jão, Ver perfil) */}
         <View style={styles.profileHeader}>
           <Image
-            source={{ uri: USER_PROFILE.avatarUrl }}
+            source={USER_PROFILE.avatarSource ?? { uri: USER_PROFILE.avatarUrl }}
             style={styles.avatar}
             contentFit="cover"
           />
@@ -314,7 +314,7 @@ export default function ProfileScreen() {
                 accessibilityLabel={`Abrir playlist ${playlist.title} de ${friendName}`}
               >
                 <Image
-                  source={{ uri: playlist.coverUrl }}
+                  source={playlist.coverSource ?? { uri: playlist.coverUrl }}
                   style={styles.friendPlaylistCover}
                   contentFit="cover"
                 />

@@ -185,7 +185,7 @@ export default function FriendProfileScreen() {
                   }
                 >
                   <Image
-                    source={{ uri: playlist.coverUrl }}
+                    source={playlist.coverSource ?? { uri: playlist.coverUrl }}
                     style={styles.playlistCover}
                     contentFit="cover"
                   />

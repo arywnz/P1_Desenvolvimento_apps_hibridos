@@ -37,7 +37,7 @@ export default function SearchScreen() {
             accessibilityLabel="Abrir perfil"
           >
             <Image
-              source={{ uri: USER_PROFILE.avatarUrl }}
+              source={USER_PROFILE.avatarSource ?? { uri: USER_PROFILE.avatarUrl }}
               style={styles.avatar}
               contentFit="cover"
             />
@@ -122,7 +122,7 @@ export default function SearchScreen() {
                 accessibilityLabel={`Ver ${playlist.title}`}
               >
                 <Image
-                  source={{ uri: playlist.coverUrl }}
+                  source={playlist.coverSource ?? { uri: playlist.coverUrl }}
                   style={styles.featuredCover}
                   contentFit="cover"
                 />

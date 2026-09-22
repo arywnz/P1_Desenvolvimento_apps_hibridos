@@ -36,12 +36,12 @@ export default function LibraryScreen() {
         {/* Cabeçalho da Biblioteca */}
         <View style={styles.header}>
           <Pressable
-            onPress={() => router.push('/settings')}
+            onPress={() => router.push('/profile')}
             accessibilityRole="button"
-            accessibilityLabel="Abrir configuracoes"
+            accessibilityLabel="Abrir perfil"
           >
             <Image
-              source={{ uri: USER_PROFILE.avatarUrl }}
+              source={USER_PROFILE.avatarSource ?? { uri: USER_PROFILE.avatarUrl }}
               style={styles.avatar}
               contentFit="cover"
             />
@@ -164,7 +164,7 @@ export default function LibraryScreen() {
               accessibilityLabel={`Abrir playlist ${playlist.title}`}
             >
               <Image
-                source={{ uri: playlist.coverUrl }}
+                source={playlist.coverSource ?? { uri: playlist.coverUrl }}
                 style={styles.playlistCover}
                 contentFit="cover"
               />

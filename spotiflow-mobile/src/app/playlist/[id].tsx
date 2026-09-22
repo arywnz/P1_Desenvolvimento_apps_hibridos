@@ -74,7 +74,7 @@ export default function PlaylistDetailScreen() {
         {/* Capa Grande em Destaque */}
         <View style={styles.coverWrapper}>
           <Image
-            source={{ uri: playlist.coverUrl }}
+            source={playlist.coverSource ?? { uri: playlist.coverUrl }}
             style={styles.coverImage}
             contentFit="cover"
           />

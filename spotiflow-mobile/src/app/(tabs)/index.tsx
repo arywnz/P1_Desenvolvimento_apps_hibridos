@@ -35,12 +35,12 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <View style={styles.profileGroup}>
             <Pressable
-              onPress={() => router.push('/settings')}
+              onPress={() => router.push('/profile')}
               accessibilityRole="button"
-              accessibilityLabel="Abrir configuracoes"
+              accessibilityLabel="Abrir perfil"
             >
               <Image
-                source={{ uri: USER_PROFILE.avatarUrl }}
+                source={USER_PROFILE.avatarSource ?? { uri: USER_PROFILE.avatarUrl }}
                 style={styles.avatar}
                 contentFit="cover"
                 accessibilityLabel="Avatar do perfil"
@@ -93,7 +93,7 @@ export default function HomeScreen() {
               accessibilityLabel={`Abrir ${playlist.title}`}
             >
               <Image
-                source={{ uri: playlist.coverUrl }}
+                source={playlist.coverSource ?? { uri: playlist.coverUrl }}
                 style={styles.shortcutCover}
                 contentFit="cover"
               />
@@ -189,7 +189,7 @@ export default function HomeScreen() {
                 accessibilityLabel={`Abrir mix ${playlist.title}`}
               >
                 <Image
-                  source={{ uri: playlist.coverUrl }}
+                  source={playlist.coverSource ?? { uri: playlist.coverUrl }}
                   style={styles.mixCover}
                   contentFit="cover"
                 />

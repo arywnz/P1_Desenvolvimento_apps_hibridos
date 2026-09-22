@@ -66,7 +66,7 @@ export default function ChatScreen() {
         </Pressable>
 
         <Image
-          source={{ uri: conversation.avatarUrl }}
+          source={conversation.avatarSource ?? { uri: conversation.avatarUrl }}
           style={styles.headerAvatar}
           contentFit="cover"
         />
