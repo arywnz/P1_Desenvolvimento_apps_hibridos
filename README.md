@@ -188,17 +188,3 @@ Alem das 7 telas documentadas acima, a aplicacao conta com:
 
 ---
 
-## Atendimento as Diretrizes da Avaliacao P1
-
-| Diretriz do Slide | Exigencia | Situacao no Projeto |
-| :--- | :--- | :--- |
-| **Ambiente de Desenvolvimento** | Hibrido no Expo | Construido com Expo SDK 57, React Native e Expo Router. |
-| **Quantidade de Telas** | Minimo de 6 telas | 10 telas funcionais e interativas implementadas. |
-| **Historico de Commits** | Minimo de 20 commits | Mais de 30 commits estruturados no historico do repositorio. |
-| **Similaridade com Colegas** | Tolerancia zero | Projeto exclusivo e customizado (Jao, FF7, K-Pop, The Witcher 3 e playlist do Garrido). |
-| **Formato de Trabalho** | Em dupla | Dupla devidamente identificada no cabecalho da documentacao. |
-| **Limpeza do Repositorio** | Sem arquivos pesados | Regras de .gitignore ativas sem pastas node_modules no versionamento. |
-
----
-
-*Projeto academico pratico - Engenharia de Software / Ciencia da Computacao - Univassouras.*
