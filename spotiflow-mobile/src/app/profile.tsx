@@ -152,7 +152,12 @@ export default function ProfileScreen() {
             </View>
           </Pressable>
 
-          <Pressable style={styles.menuRow} accessibilityRole="button">
+          <Pressable
+            style={styles.menuRow}
+            onPress={() => router.push('/settings')}
+            accessibilityRole="button"
+            accessibilityLabel="Abrir configurações e privacidade"
+          >
             <SymbolView
               name={{
                 ios: 'gearshape',
@@ -166,6 +171,16 @@ export default function ProfileScreen() {
             <View style={styles.menuTextGroup}>
               <Text style={styles.menuTitle}>Configurações e privacidade</Text>
             </View>
+            <SymbolView
+              name={{
+                ios: 'chevron.forward',
+                android: 'chevron_right',
+                web: 'chevron_right',
+              }}
+              size={18}
+              tintColor={Colors.textSecondary}
+              type="hierarchical"
+            />
           </Pressable>
         </View>
 
@@ -211,7 +226,12 @@ export default function ProfileScreen() {
               />
             </View>
 
-            <Pressable hitSlop={8} accessibilityRole="button" accessibilityLabel="Escrever mensagem">
+            <Pressable
+              hitSlop={8}
+              onPress={() => router.push({ pathname: '/chat', params: { id: DIRECT_MESSAGES[0].id } })}
+              accessibilityRole="button"
+              accessibilityLabel="Escrever mensagem"
+            >
               <SymbolView
                 name={{
                   ios: 'square.and.pencil',
@@ -225,10 +245,16 @@ export default function ProfileScreen() {
             </Pressable>
           </View>
 
-          {/* Lista de Mensagens Diretas */}
+          {/* Lista de Mensagens Diretas Clicáveis */}
           <View style={styles.messagesList}>
             {DIRECT_MESSAGES.map((dm) => (
-              <View key={dm.id} style={styles.dmRow}>
+              <Pressable
+                key={dm.id}
+                style={styles.dmRow}
+                onPress={() => router.push({ pathname: '/chat', params: { id: dm.id } })}
+                accessibilityRole="button"
+                accessibilityLabel={`Abrir conversa com ${dm.senderName}`}
+              >
                 <Image
                   source={{ uri: dm.avatarUrl }}
                   style={styles.dmAvatar}
@@ -240,10 +266,25 @@ export default function ProfileScreen() {
                     {dm.previewText} • {dm.date}
                   </Text>
                 </View>
-              </View>
+                <SymbolView
+                  name={{
+                    ios: 'chevron.forward',
+                    android: 'chevron_right',
+                    web: 'chevron_right',
+                  }}
+                  size={16}
+                  tintColor={Colors.textMuted}
+                  type="hierarchical"
+                />
+              </Pressable>
             ))}
 
-            <Pressable style={styles.newChatRow} accessibilityRole="button">
+            <Pressable
+              style={styles.newChatRow}
+              onPress={() => router.push({ pathname: '/chat', params: { id: DIRECT_MESSAGES[0].id } })}
+              accessibilityRole="button"
+              accessibilityLabel="Nova conversa"
+            >
               <View style={styles.newChatIconCircle}>
                 <SymbolView
                   name={{

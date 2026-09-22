@@ -43,12 +43,21 @@ export interface FriendActivity {
   lastActive: string;
 }
 
+export interface ChatMessage {
+  id: string;
+  sender: 'me' | 'them';
+  text: string;
+  time: string;
+  sharedTrack?: Track;
+}
+
 export interface DirectMessage {
   id: string;
   senderName: string;
   avatarUrl: string;
   previewText: string;
   date: string;
+  messages: ChatMessage[];
 }
 
 // Faixa atual em reprodução (conforme o mini player dos prints)
@@ -178,7 +187,7 @@ export const SEARCH_CATEGORIES: Category[] = [
 export const USER_PROFILE = {
   name: 'Jão',
   plan: 'Universitário',
-  avatarUrl: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=200&q=80', // gatinho neutro de alta qualidade
+  avatarUrl: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=200&q=80',
 };
 
 // Amigos e Atividades (nomes normais e reais)
@@ -215,7 +224,7 @@ export const FRIENDS_ACTIVITY: FriendActivity[] = [
   },
 ];
 
-// Mensagens diretas (nomes normais e reais)
+// Mensagens diretas com histórico de conversa completo
 export const DIRECT_MESSAGES: DirectMessage[] = [
   {
     id: 'dm-1',
@@ -223,6 +232,27 @@ export const DIRECT_MESSAGES: DirectMessage[] = [
     avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80',
     previewText: 'compartilhou 1 música',
     date: '8 de abr.',
+    messages: [
+      {
+        id: 'msg-1',
+        sender: 'them',
+        text: 'E aí Jão! Já ouviu esse som novo?',
+        time: '14:20',
+      },
+      {
+        id: 'msg-2',
+        sender: 'them',
+        text: 'Dá uma olhada, achei muito a sua cara:',
+        time: '14:21',
+        sharedTrack: CURRENT_TRACK,
+      },
+      {
+        id: 'msg-3',
+        sender: 'me',
+        text: 'Nossa, bom demais! Já adicionei na minha playlist.',
+        time: '14:25',
+      },
+    ],
   },
   {
     id: 'dm-2',
@@ -230,5 +260,19 @@ export const DIRECT_MESSAGES: DirectMessage[] = [
     avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&q=80',
     previewText: 'Enviou uma recomendação',
     date: '7 de mar.',
+    messages: [
+      {
+        id: 'msg-201',
+        sender: 'them',
+        text: 'Mano, aquele álbum do Cazuza que você tava ouvindo é sensacional',
+        time: '18:05',
+      },
+      {
+        id: 'msg-202',
+        sender: 'me',
+        text: 'Exagerado né? Um clássico atemporal!',
+        time: '18:10',
+      },
+    ],
   },
 ];

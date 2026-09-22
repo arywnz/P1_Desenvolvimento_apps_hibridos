@@ -83,6 +83,12 @@ export default function HomeScreen() {
             <Pressable
               key={playlist.id}
               style={styles.shortcutCard}
+              onPress={() =>
+                router.push({
+                  pathname: '/playlist/[id]',
+                  params: { id: playlist.id },
+                })
+              }
               accessibilityRole="button"
               accessibilityLabel={`Abrir ${playlist.title}`}
             >
@@ -109,6 +115,7 @@ export default function HomeScreen() {
               <Pressable
                 key={track.id}
                 style={styles.recentCard}
+                onPress={() => playTrack(track)}
                 accessibilityRole="button"
                 accessibilityLabel={`Tocar ${track.title}`}
               >
@@ -172,6 +179,12 @@ export default function HomeScreen() {
               <Pressable
                 key={playlist.id}
                 style={styles.mixCard}
+                onPress={() =>
+                  router.push({
+                    pathname: '/playlist/[id]',
+                    params: { id: playlist.id },
+                  })
+                }
                 accessibilityRole="button"
                 accessibilityLabel={`Abrir mix ${playlist.title}`}
               >

@@ -70,7 +70,7 @@ export default function LibraryScreen() {
 
             <Pressable
               hitSlop={8}
-              onPress={() => router.push('/(tabs)/create')}
+              onPress={() => router.push('/create-modal')}
               accessibilityRole="button"
               accessibilityLabel="Criar nova playlist"
             >
