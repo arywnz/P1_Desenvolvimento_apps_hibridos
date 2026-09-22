@@ -22,7 +22,7 @@ export default function AccountScreen() {
     switch (type) {
       case 'premium':
         return {
-          title: 'Seu Premium',
+          title: 'Premium',
           subtitle: 'Você é membro do Spotify Premium',
           badge: 'Universitário',
           infoTitle: 'Detalhes da Assinatura',

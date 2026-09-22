@@ -1,250 +1,204 @@
-# 🎧 Spotiflow Mobile — Projeto P1
+# Spotiflow Mobile - Avaliacao P1
 
-> **Disciplina:** Desenvolvimento de Aplicativos Híbridos  
-> **Professor:** Márcio Garrido  
-> **Instituição:** Universidade de Vassouras (Univassouras)  
-> **Integrantes (Dupla):** Ian & Dupla / Jão  
+> **Disciplina:** Desenvolvimento de Aplicativos Hibridos  
+> **Professor:** Marcio Garrido  
+> **Instituicao:** Universidade de Vassouras (Univassouras)  
+> **Integrantes (Dupla):** Ian & Joao Victor (Jao)  
 > **Tecnologias:** React Native, Expo Router (SDK 57), TypeScript  
 
 ---
 
-## 📌 Sobre o Projeto
+## Sobre o Projeto
 
-Fala pessoal! Esse aqui é o **Spotiflow**, o app mobile desenvolvido como projeto prático para a avaliação da **P1** na disciplina de Desenvolvimento de Aplicativos Híbridos.
+Este e o Spotiflow, aplicativo mobile desenvolvido para a avaliacao da P1 da disciplina de Desenvolvimento de Aplicativos Hibridos.
 
-A ideia principal do projeto foi reproduzir a experiência visual, o design system escuro e a usabilidade do **Spotify Mobile**, construindo uma aplicação híbrida moderna, performática e fluida utilizando **React Native com Expo Router**. 
+A proposta do trabalho foi escolher uma aplicacao consolidada de mercado para mocar em ambiente hibrido utilizando React Native com Expo, aplicando os conceitos ensinados em aula:
+- Roteamento baseado em arquivos com Expo Router;
+- Gerenciamento de estado global com Context API (mantendo o player em reproducao continua durante a navegacao);
+- Componentizacao limpa, estilizacao em tema escuro (Dark Theme do Spotify) e tipagem com TypeScript;
+- Dados mockados com artistas, faixas e duracoes reais, capas personalizadas e playlists diversificadas por usuario.
 
-Em vez de ficarmos só na casca de telas estáticas, o projeto conta com **10 telas totalmente navegáveis e interativas**, gerenciamento de estado global com `Context API` para reprodução contínua de áudio, navegação baseada em arquivos com rotas dinâmicas e dados simulados (mock) com músicas, artistas e playlists reais.
+O projeto possui 10 telas navegaveis e interativas, superando a meta minima de 6 telas solicitada no slide de avaliacao. A seguir, detalhamos as telas capturadas diretamente em execucao real no dispositivo.
 
 ---
 
-## 🚀 Como Rodar o Projeto Localmente
+## Como Rodar o Projeto Localmente
 
-Para rodar o app no seu computador e testar no celular (via Expo Go) ou no navegador:
+Para clonar e executar o projeto:
 
-### Pré-requisitos
-- **Node.js** instalado (versão 18 ou superior recomendada)
-- Gerenciador de pacotes **npm** ou **yarn**
-- Aplicativo **Expo Go** instalado no smartphone (Android ou iOS) se for testar no aparelho físico
+### Pre-requisitos
+- Node.js instalado (v18 ou superior)
+- Gerenciador de pacotes npm ou yarn
+- Aplicativo Expo Go no smartphone (Android ou iOS)
 
-### Passo a Passo
+### Execucao
 
-1. **Clone o repositório:**
+1. Clone o repositorio:
    ```bash
    git clone https://github.com/arywnz/P1_Desenvolvimento_apps_hibridos.git
    cd P1_Desenvolvimento_apps_hibridos
    ```
 
-2. **Acesse a pasta do app e instale as dependências:**
+2. Acesse a pasta do aplicativo e instale as dependencias:
    ```bash
    cd spotiflow-mobile
    npm install
    ```
 
-3. **Inicie o servidor de desenvolvimento do Expo:**
+3. Inicie o servidor do Expo:
    ```bash
    npx expo start -c
    ```
 
-4. **Executando:**
-   - **No celular:** Abra o app do **Expo Go** e escaneie o QR Code que aparece no terminal (se estiver em redes Wi-Fi diferentes, pode rodar com `npx expo start --tunnel`).
-   - **No navegador (Web):** Pressione `w` no terminal para abrir no navegador em modo responsivo (recomendado usar a emulação mobile do DevTools do Chrome/Edge).
+4. Abertura no dispositivo:
+   - Escaneie o QR Code exibido no terminal utilizando o app Expo Go.
+   - Ou pressione a tecla w no terminal para abrir a versao Web no navegador.
 
 ---
 
-## 🛠️ Tecnologias e Bibliotecas Utilizadas
+## Telas do Sistema e Fluxo de Navegacao
 
-- **[React Native](https://reactnative.dev/):** Framework para desenvolvimento híbrido multiplataforma com componentes nativos.
-- **[Expo (SDK 57)](https://expo.dev/):** Ferramental robusto para build, emulação e deploy ágil.
-- **[Expo Router](https://docs.expo.dev/router/introduction/):** Roteamento moderno baseado em sistema de arquivos (File-based routing), suporte a abas (`tabs`), modais nativos e rotas dinâmicas (`[id].tsx`).
-- **[TypeScript](https://www.typescriptlang.org/):** Tipagem estática para contratos de dados (`Track`, `Playlist`, `FriendActivity`, `ChatMessage`), evitando bugs em tempo de execução.
-- **[Expo Image](https://docs.expo.dev/versions/latest/sdk/image/):** Renderização de imagens de alta performance com suporte a cache inteligente, transições suaves e carregamento híbrido (URIs remotas e assets locais com `require`).
-- **[Expo Symbols](https://docs.expo.dev/versions/latest/sdk/symbols/):** Ícones vetoriais modernos com suporte a SF Symbols no iOS e Material Icons no Android/Web.
-- **React Context API:** Gerenciamento centralizado do estado do reprodutor (`PlayerContext`), mantendo a faixa atual, status de play/pause e progresso sincronizados entre Mini Player e Player Fullscreen.
+Abaixo estao as telas reais do aplicativo em execucao, demonstrando o fluxo de uso:
 
 ---
 
-## 📱 Fluxo de Navegação e Telas do Sistema
-
-O aplicativo foi desenhado respeitando rigorosamente a hierarquia visual do Spotify. Abaixo está a explicação detalhada de cada fluxo acompanhada dos prints das telas:
-
----
-
-### 1. Tela Inicial (Home)
-É o ponto de entrada do usuário. Conta com filtros rápidos no topo ("Tudo", "Música", "Podcasts"), grade de atalhos para as playlists mais acessadas recentemente, card exclusivo do DJ com recomendação por voz simulada e carrossel horizontal de mixes diários. No rodapé, o Mini Player permanece fixo e acessível.
+### 1. Sua Biblioteca (src/app/(tabs)/library.tsx)
+Painel de organizacao das colecoes do usuario logado (Jao). Possui filtros no topo (Playlists, Baixado), alternancia de visualizacao e ordenacao por atividade recente.
 
 <p align="center">
-  <img src="docs/screenshots/01-home.jpg" alt="Tela Inicial - Home" width="300" />
+  <img src="docs/screenshots/01-biblioteca.jpg" alt="Tela da Biblioteca" width="300" />
 </p>
 
-* **Interações:** 
-  - Tocar no avatar no topo leva para o menu de **Perfil do Usuário**.
-  - Tocar em qualquer card de playlist abre os detalhes daquela playlist.
-  - Tocar no Mini Player expande o player em tela cheia.
+- **Playlists personalizadas:**
+  - Echos of us: Capa tematica de Final Fantasy VII Remake, contendo faixas da trilha sonora de Final Fantasy VII (Nobuo Uematsu), The Witcher 3: Wild Hunt (Marcin Przybylowicz) e classicos da MPB/Rock.
+  - My peace: Fixada com indicador verde, com foco em MPB acustica.
+  - on my mind: Focada em R&B e Hip-Hop (The Weeknd, Drake, Frank Ocean, SZA).
+  - Dyanassics + Jao: Playlist de Spotify Match.
+  - musicas curtidas do ian: Playlist de faixas curtidas com trap nacional (Matue, Veigh, LEALL).
+  - kpop e os crl: Capa e selecao musical do grupo NewJeans e K-Pop.
+- **Mini Player:** Fixado na barra inferior mostrando a faixa atual (Exagerado - Cazuza) com controles sincronizados via PlayerContext.
+- **Barra de Abas:** Navegacao entre Inicio, Buscar, Biblioteca e o botao de atalho Criar (+).
 
 ---
 
-### 2. Tela de Busca e Gêneros (Search)
-Interface dedicada à descoberta de conteúdo. Possui campo de busca interativo com resposta imediata e cards coloridos categorizados por gêneros e ocasiões (Música, Podcasts, Eventos ao Vivo, Fitness, Rock, MPB, etc.).
+### 2. Modal de Criacao Rapida (src/app/create-modal.tsx)
+Ao tocar no botao de atalho Criar (+) na barra inferior ou no topo da Biblioteca, abre-se este Bottom Sheet sobreposto com fundo escurecido sem perder o estado da tela anterior.
 
 <p align="center">
-  <img src="docs/screenshots/02-search.jpg" alt="Tela de Busca" width="300" />
+  <img src="docs/screenshots/02-modal-criar.jpg" alt="Modal de Criacao" width="300" />
 </p>
 
-* **Interações:**
-  - Permite digitar o nome de músicas ou artistas filtrando os resultados.
-  - Tocar nos cards de categoria exibe os vídeos e coleções selecionadas.
+- **Opcoes disponiveis:**
+  - Playlist: Cria uma nova playlist para adicao de faixas.
+  - Playlist colaborativa: Permite convidar contatos para edicao conjunta.
+  - Playlist mixada (Beta): Algoritmo que une faixas com transicao automatica.
+  - Match: Uniao de gostos musicais entre perfis.
+  - Jam: Sessao compartilhada para audicao sincronizada em grupo.
+  - Botao Fechar (X): Descarta o modal retornando para a tela de origem.
 
 ---
 
-### 3. Sua Biblioteca (Your Library)
-Central de gerenciamento das coleções do usuário. Apresenta filtros em estilo pílula ("Playlists", "Álbuns", "Artistas"), botão de adicionar/criar nova playlist (`+`) e ordenação dinâmica por atividade recente.
+### 3. Perfil do Usuario e Atividade de Amigos (src/app/profile.tsx)
+Acessado ao clicar no avatar do usuario no topo da tela. Centraliza o perfil, status da conta e atividade social.
 
 <p align="center">
-  <img src="docs/screenshots/03-library.jpg" alt="Sua Biblioteca" width="300" />
+  <img src="docs/screenshots/03-perfil-amigos.jpg" alt="Perfil do Usuario e Amigos" width="300" />
 </p>
 
-* **Interações:**
-  - Lista todas as playlists criadas, incluindo as **Músicas curtidas do Ian** (fixada com ícone de pin).
-  - Tocar no botão `+` abre o modal de criação rápida (Criar playlist, Match ou Jam).
+- **Elementos da tela:**
+  - Identificacao do perfil: Avatar de Jao, link para visualizacao e selo do plano Universitario.
+  - Acoes da conta: Atalhos para Adicionar conta, Seu Premium, Estatisticas Musicais, Recentes, Suas atualizacoes e Configuracoes e privacidade.
+  - Atividade de Amigos em Tempo Real: Exibe o status do que cada amigo esta escutando (Gabriela com sangrar, Marcio Garrido com Back in Black, Camila com SaWaDiKa e Lucas Ferreira com Evidencias).
+  - Playlists dos Amigos: Carrossel com acesso direto as playlists exclusivas de cada contato. Ao tocar no amigo, abre-se o perfil individual (src/app/friend-profile.tsx).
 
 ---
 
-### 4. Detalhes da Playlist e Lista de Faixas
-Tela dinâmica (`src/app/playlist/[id].tsx`) que carrega automaticamente as faixas, capas personalizadas e créditos de qualquer playlist selecionada (tanto do usuário quanto dos amigos).
+### 4. Configuracoes e Privacidade (src/app/settings.tsx)
+Menu de preferencias estruturado com controles nativos (Switch).
 
 <p align="center">
-  <img src="docs/screenshots/04-playlist.jpg" alt="Detalhes da Playlist" width="300" />
+  <img src="docs/screenshots/04-configuracoes.jpg" alt="Configuracoes e Privacidade" width="300" />
 </p>
 
-* **Destaques do Mock Realista:**
-  - Capa de **Final Fantasy VII Remake** para a playlist *"Echos of us"*, acompanhada pelas trilhas sonoras icônicas de *Final Fantasy VII* (Nobuo Uematsu) e *The Witcher 3: Wild Hunt* (Marcin Przybyłowicz).
-  - Capa de **NewJeans** para a playlist de K-Pop com hits reais de BTS, BLACKPINK e LE SSERAFIM.
-  - Botão verde flutuante de Play com toggle dinâmico de Play/Pause.
-  - Toque em qualquer faixa para começar a reprodução imediata no player global.
+- **Secoes disponiveis:**
+  - CONTA: Acesso ao perfil, e-mail institucional (jao.estudante@univassouras.edu.br) e indicacao do plano ativo.
+  - ECONOMIA DE DADOS: Chave para reduzir qualidade e suspender transmissao de videos.
+  - REPRODUCAO: Modo offline, transicao suave (Crossfade) e normalizacao de volume.
+  - PRIVACIDADE E CONTEUDO: Controle para exibicao de faixas com conteudo explicito marcado com a tag (E).
 
 ---
 
-### 5. Player de Música em Tela Cheia (Fullscreen Player)
-Modal aberto ao clicar no Mini Player. Apresenta arte da capa em destaque, barra de controle com tempo decorrido e restante da música, botões de retroceder, avançar, aleatório (shuffle), repetição em loop e curtir.
+### 5. Central de Assinatura - Seu Premium (src/app/account.tsx)
+Acessada atraves do item Seu Premium no menu de perfil, detalhando a assinatura ativa.
 
 <p align="center">
-  <img src="docs/screenshots/05-player.jpg" alt="Player em Tela Cheia" width="300" />
+  <img src="docs/screenshots/05-seu-premium.jpg" alt="Seu Premium" width="300" />
 </p>
 
-* **Interações:**
-  - Controle de reprodução em tempo real com barra de progresso.
-  - Botão de minimizar no canto superior para voltar à navegação sem interromper o som.
+- **Informacoes detalhadas:**
+  - Plano: Premium Universitario.
+  - Mensalidade: R$ 11,90 / mes com data de cobranca e metodo cadastrado.
+  - Beneficios: Reproducao sem anuncios, download offline e reproducao em alta fidelidade.
+  - Acao rapida: Botao para ouvir recomendacao personalizada do dia.
 
 ---
 
-### 6. Perfil do Usuário e Atividade de Amigos
-Acessível pelo topo da Home e da Biblioteca, essa tela reúne o perfil ativo (**Jão**, plano Universitário) e traz a funcionalidade de **Atividade de Amigos em Tempo Real**.
+### 6. Tocadas Recentemente (src/app/account.tsx?type=recent)
+Historico cronologico das reproducoes recentes do usuario.
 
 <p align="center">
-  <img src="docs/screenshots/06-profile.jpg" alt="Perfil e Menu Lateral" width="300" />
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="docs/screenshots/09-friend-activity.jpg" alt="Atividade de Amigos" width="300" />
+  <img src="docs/screenshots/06-tocadas-recentemente.jpg" alt="Tocadas Recentemente" width="300" />
 </p>
 
-* **Interações:**
-  - Mostra o status e o que cada amigo está escutando no momento.
-  - Cada amigo possui gostos musicais diferentes (o professor **Márcio Garrido** com clássicos do Hard Rock e Heavy Metal, Gabriela com Indie e Acústico, Camila com Lo-Fi e Jazz, Lucas Ferreira com Sertanejo).
-  - Tocar no card de qualquer amigo abre o **Perfil do Amigo**.
+- **Registros cronologicos:**
+  - 14:20 - Exagerado (Cazuza)
+  - 13:50 - Codinome Beija-Flor (Cazuza)
+  - 12:15 - O Tempo Nao Para (Cazuza)
+  - Ontem - Ideologia (Cazuza)
+  - Ontem - Playlist: Echos of us
+- Permite retomar qualquer faixa ou playlist tocada anteriormente com um toque.
 
 ---
 
-### 7. Configurações e Privacidade (Settings)
-Interface de ajustes inspirada fielmente nas opções do Spotify, categorizada em seções funcionais com toggles nativos (`Switch`).
+### 7. Estatisticas Musicais (src/app/account.tsx?type=stats)
+Painel com metricas e analise do historico musical do usuario durante o periodo.
 
 <p align="center">
-  <img src="docs/screenshots/07-settings.jpg" alt="Configurações e Privacidade" width="300" />
+  <img src="docs/screenshots/07-estatisticas-musicais.jpg" alt="Estatisticas Musicais" width="300" />
 </p>
 
-* **Ajustes disponíveis:**
-  - **Reprodução:** Modo sem pausas (Gapless), Normalização de áudio e Autoplay.
-  - **Economia de Dados:** Download apenas em Wi-Fi e qualidade de streaming.
-  - **Privacidade & Social:** Sessão privada e transmissão de atividade para amigos.
-  - **Atalhos internos:** Links diretos para gerenciamento de conta e estatísticas.
+- **Metricas exibidas:**
+  - Top Artista: Cazuza (mais de 320 minutos ouvidos).
+  - Top Genero: MPB / Rock Nacional.
+  - Total de Faixas: 1.240 musicas reproduzidas no mes.
+  - Minutos Totais: 4.850 minutos.
+  - Vibe Predominante: Nostalgica & Poetica.
 
 ---
 
-### 8. Conversas e Compartilhamento de Músicas (Direct Chat)
-Área de mensagens diretas que permite interagir com os amigos, bater papo e escutar faixas compartilhadas diretamente pelo balão da mensagem.
+## Outras Telas Implementadas
 
-<p align="center">
-  <img src="docs/screenshots/08-chat.jpg" alt="Chat de Mensagens" width="300" />
-</p>
-
-* **Interações:**
-  - Campo de texto para digitar e enviar novas mensagens em tempo real.
-  - Card integrado da faixa compartilhada com botão de play direto dentro da conversa.
-
----
-
-### 9. Central de Conta e Multicontas (Account Hub)
-Tela detalhada para administração da conta, permitindo alternar entre perfis, configurar o plano Universitário e visualizar lançamentos recentes e atualizações.
-
-<p align="center">
-  <img src="docs/screenshots/10-account-details.jpg" alt="Central de Conta" width="300" />
-</p>
+Alem das 7 telas documentadas acima, a aplicacao conta com:
+- **Tela Inicial (src/app/(tabs)/index.tsx):** Feed principal com filtros de chip (Tudo, Musica, Podcasts), grade de atalhos e recomendacoes diarias.
+- **Tela de Busca (src/app/(tabs)/search.tsx):** Campo de busca com filtragem em tempo real e navegacao por generos.
+- **Detalhes de Playlist Dinamica (src/app/playlist/[id].tsx):** Rota dinamica que exibe qualquer playlist, lista completa de faixas e controle de reproducao.
+- **Player em Tela Cheia (src/app/player.tsx):** Modal de reproducao completa com barra de tempo, aleatorio e repeticao.
+- **Chat Direto (src/app/chat.tsx):** Interface de mensagens com amigos simulados e player de faixas compartilhadas.
+- **Perfil do Amigo (src/app/friend-profile.tsx):** Perfil dedicado para cada amigo com botao de seguir e playlists proprias.
 
 ---
 
-## 📂 Estrutura de Pastas do Projeto
+## Atendimento as Diretrizes da Avaliacao P1
 
-A arquitetura do código foi estruturada com foco na separação de responsabilidades e na facilidade de manutenção:
-
-```plaintext
-P1_Desenvolvimento_apps_hibridos/
-├── docs/
-│   └── screenshots/              # Prints de demonstração das telas do app
-├── spotiflow-mobile/
-│   ├── assets/
-│   │   └── images/               # Fotos de perfil locais, capas de playlists e logos
-│   ├── src/
-│   │   ├── app/                  # Rotas do Expo Router (File-based Routing)
-│   │   │   ├── (tabs)/           # Abas principais (Home, Busca, Biblioteca)
-│   │   │   │   ├── _layout.tsx   # Configuração da barra inferior de abas
-│   │   │   │   ├── index.tsx     # Tela Home
-│   │   │   │   ├── search.tsx    # Tela de Busca
-│   │   │   │   └── library.tsx   # Tela da Biblioteca
-│   │   │   ├── playlist/
-│   │   │   │   └── [id].tsx      # Rota dinâmica para detalhes de playlists
-│   │   │   ├── _layout.tsx       # Root layout e injeção do PlayerContext
-│   │   │   ├── account.tsx       # Tela de detalhes da conta e multicontas
-│   │   │   ├── chat.tsx          # Tela de conversa direta (Direct Message)
-│   │   │   ├── create-modal.tsx  # Modal transparente de criação rápida
-│   │   │   ├── friend-profile.tsx# Perfil individualizado de amigos
-│   │   │   ├── player.tsx        # Player modal em tela cheia
-│   │   │   ├── profile.tsx       # Perfil do usuário e gaveta de amigos
-│   │   │   └── settings.tsx      # Configurações e privacidade
-│   │   ├── components/
-│   │   │   └── MiniPlayer.tsx    # Componente global de mini player flutuante
-│   │   ├── constants/
-│   │   │   ├── mockData.ts       # Base de dados mockada (faixas, playlists, amigos)
-│   │   │   └── theme.ts          # Design tokens (cores oficiais, tipografia e espaçamentos)
-│   │   └── context/
-│   │       └── PlayerContext.tsx # Context API gerenciando estado global do player
-│   ├── app.json                  # Configurações do Expo
-│   ├── package.json              # Dependências e scripts do projeto
-│   └── tsconfig.json             # Configurações do TypeScript
-├── .gitignore                    # Regras de exclusão do Git (node_modules, caches)
-└── README.md                     # Documentação completa do projeto
-```
+| Diretriz do Slide | Exigencia | Situacao no Projeto |
+| :--- | :--- | :--- |
+| **Ambiente de Desenvolvimento** | Hibrido no Expo | Construido com Expo SDK 57, React Native e Expo Router. |
+| **Quantidade de Telas** | Minimo de 6 telas | 10 telas funcionais e interativas implementadas. |
+| **Historico de Commits** | Minimo de 20 commits | Mais de 30 commits estruturados no historico do repositorio. |
+| **Similaridade com Colegas** | Tolerancia zero | Projeto exclusivo e customizado (Jao, FF7, K-Pop, The Witcher 3 e playlist do Garrido). |
+| **Formato de Trabalho** | Em dupla | Dupla devidamente identificada no cabecalho da documentacao. |
+| **Limpeza do Repositorio** | Sem arquivos pesados | Regras de .gitignore ativas sem pastas node_modules no versionamento. |
 
 ---
 
-## 🎯 Requisitos da Avaliação P1 Atendidos
-
-| Requisito Avaliado | Situação | Detalhes no Projeto |
-| :--- | :---: | :--- |
-| **Mínimo de 6 telas navegáveis** | ✅ **Superado** | O app conta com **10 telas completas e interativas** (Home, Busca, Biblioteca, Criar Modal, Playlist Dinâmica, Player Fullscreen, Perfil, Configurações, Chat e Perfil do Amigo). |
-| **Histórico mínimo de 20 commits** | ✅ **Superado** | Histórico com **mais de 30 commits** estruturados, com mensagens semânticas em português documentando a evolução do desenvolvimento passo a passo. |
-| **Integridade do Repositório** | ✅ **Atendido** | Repositório limpo sem pastas `node_modules/` ou builds acidentais comitadas, graças ao `.gitignore` devidamente configurado. |
-| **Experiência e Estética Fiel** | ✅ **Atendido** | Identidade visual escura do Spotify, paleta de cores HSL personalizada, fontes modernas, microanimações nos botões e estados de feedback ao tocar. |
-| **Dados Realistas sem Duplicações** | ✅ **Atendido** | Músicas, artistas, álbuns e durações reais, capas personalizadas exclusivas e playlists com identidades temáticas bem definidas. |
-
----
-
-*Trabalho prático desenvolvido com dedicação para a disciplina de Desenvolvimento de Aplicativos Híbridos — Univassouras.*
+*Projeto academico pratico - Engenharia de Software / Ciencia da Computacao - Univassouras.*

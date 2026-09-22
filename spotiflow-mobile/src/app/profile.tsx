@@ -112,7 +112,7 @@ export default function ProfileScreen() {
             style={styles.menuRow}
             onPress={() => router.push({ pathname: '/account', params: { type: 'premium' } })}
             accessibilityRole="button"
-            accessibilityLabel="Seu Premium"
+            accessibilityLabel="Premium"
           >
             <SymbolView
               name={{
@@ -125,7 +125,7 @@ export default function ProfileScreen() {
               type="hierarchical"
             />
             <View style={styles.menuTextGroup}>
-              <Text style={styles.menuTitle}>Seu Premium</Text>
+              <Text style={styles.menuTitle}> Premium</Text>
             </View>
             <View style={styles.premiumBadge}>
               <Text style={styles.premiumBadgeText}>{USER_PROFILE.plan}</Text>
