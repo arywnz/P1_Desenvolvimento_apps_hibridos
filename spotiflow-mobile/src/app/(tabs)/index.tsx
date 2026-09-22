@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -20,6 +21,7 @@ const DJ_PLAYLIST = MOCK_PLAYLISTS[0];
 const RECOMMENDED_MIXES = MOCK_PLAYLISTS.slice(1, 5);
 
 export default function HomeScreen() {
+  const router = useRouter();
   const [activeFilter, setActiveFilter] = useState(MEDIA_FILTERS[0]);
   const { playTrack } = usePlayer();
 
@@ -32,12 +34,18 @@ export default function HomeScreen() {
       >
         <View style={styles.header}>
           <View style={styles.profileGroup}>
-            <Image
-              source={{ uri: USER_PROFILE.avatarUrl }}
-              style={styles.avatar}
-              contentFit="cover"
-              accessibilityLabel="Avatar do perfil"
-            />
+            <Pressable
+              onPress={() => router.push('/profile')}
+              accessibilityRole="button"
+              accessibilityLabel="Abrir perfil"
+            >
+              <Image
+                source={{ uri: USER_PROFILE.avatarUrl }}
+                style={styles.avatar}
+                contentFit="cover"
+                accessibilityLabel="Avatar do perfil"
+              />
+            </Pressable>
             <View>
               <Text style={styles.eyebrow}>{USER_PROFILE.plan}</Text>
               <Text style={styles.title}>Boa noite</Text>

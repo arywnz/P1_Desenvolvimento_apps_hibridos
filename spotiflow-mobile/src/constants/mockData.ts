@@ -88,9 +88,9 @@ export const MOCK_PLAYLISTS: Playlist[] = [
       },
       {
         id: 'track-3',
-        title: 'O Tempo Não Pára',
+        title: 'O Tempo Não Para',
         artist: 'Cazuza',
-        album: 'O Tempo Não Pára',
+        album: 'O Tempo Não Para',
         duration: '4:38',
         durationSeconds: 278,
         coverUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&q=80',
