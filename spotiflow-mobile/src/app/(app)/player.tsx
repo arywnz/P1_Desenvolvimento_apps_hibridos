@@ -148,7 +148,11 @@ export default function PlayerScreen() {
               onPress={() =>
                 router.push({
                   pathname: '/artist/[id]',
-                  params: { id: encodeURIComponent(currentTrack.artist) },
+                  params: {
+                    id:
+                      currentTrack.artistId ??
+                      encodeURIComponent(currentTrack.artist),
+                  },
                 })
               }
               accessibilityRole="button"

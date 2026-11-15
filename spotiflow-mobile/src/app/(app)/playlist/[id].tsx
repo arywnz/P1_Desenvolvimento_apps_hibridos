@@ -1,10 +1,18 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import {
+  FlatList,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ResourceNotFound } from '../../../components/ResourceNotFound';
+import { StateView } from '../../../components/StateView';
 import {
   Radius,
   Shadows,
@@ -15,6 +23,8 @@ import {
 import { useLibrary } from '../../../context/LibraryContext';
 import { usePlayer } from '../../../context/PlayerContext';
 import { useTheme } from '../../../context/ThemeContext';
+import { useFetch } from '../../../hooks/useFetch';
+import { api } from '../../../services/api';
 
 export default function PlaylistDetailScreen() {
   const router = useRouter();
@@ -25,11 +35,37 @@ export default function PlaylistDetailScreen() {
     [colors, typography]
   );
   const { allPlaylists, savedIds, toggleSavePlaylist } = useLibrary();
-  const { playTrack, currentTrack, isPlaying, togglePlayPause } = usePlayer();
+  const { playTrack, currentTrack, isPlaying, togglePlayPause, addToQueue } =
+    usePlayer();
+  const [refreshing, setRefreshing] = useState(false);
 
-  const playlist = allPlaylists.find((p) => p.id === id);
+  const localPlaylist = useMemo(
+    () => allPlaylists.find((p) => p.id === id) ?? null,
+    [allPlaylists, id]
+  );
+  const shouldFetchRemote = Boolean(id && !localPlaylist && /^\d+$/.test(id));
 
-  if (!playlist) {
+  const fetchRemotePlaylist = useCallback(
+    () => api.getPlaylist(id ?? ''),
+    [id]
+  );
+  const {
+    data: remotePlaylist,
+    loading,
+    error,
+    reload,
+  } = useFetch(fetchRemotePlaylist, { enabled: shouldFetchRemote });
+
+  const playlist = localPlaylist ?? remotePlaylist;
+
+  const handleRefresh = async () => {
+    if (!shouldFetchRemote) return;
+    setRefreshing(true);
+    await reload();
+    setRefreshing(false);
+  };
+
+  if (!id || (!localPlaylist && !shouldFetchRemote)) {
     return (
       <ResourceNotFound
         title="Playlist não encontrada"
@@ -38,8 +74,50 @@ export default function PlaylistDetailScreen() {
     );
   }
 
-  const isSaved = savedIds.includes(playlist.id);
+  if (shouldFetchRemote && (loading || error || !playlist)) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.topBar}>
+          <Pressable
+            style={styles.backButton}
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Voltar"
+          >
+            <SymbolView
+              name={{
+                ios: 'chevron.backward',
+                android: 'arrow_back',
+                web: 'arrow_back',
+              }}
+              size={24}
+              tintColor={colors.textPrimary}
+              type="hierarchical"
+            />
+          </Pressable>
+        </View>
+        <StateView
+          loading={loading}
+          error={error}
+          isEmpty={!playlist}
+          loadingLabel="Carregando playlist da Deezer..."
+          emptyTitle="Playlist não encontrada"
+          emptyDescription="Não localizamos faixas para essa playlist."
+          onRetry={() => {
+            void reload();
+          }}
+        >
+          {null}
+        </StateView>
+      </SafeAreaView>
+    );
+  }
 
+  if (!playlist) {
+    return null;
+  }
+
+  const isSaved = savedIds.includes(playlist.id);
   const isCurrentPlaylistPlaying =
     isPlaying && playlist.tracks.some((t) => t.id === currentTrack?.id);
 
@@ -76,188 +154,218 @@ export default function PlaylistDetailScreen() {
         </Pressable>
       </View>
 
-      <ScrollView
+      <FlatList
+        data={playlist.tracks}
+        keyExtractor={(item) => item.id}
         style={styles.container}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
-      >
-        {/* Capa Grande em Destaque */}
-        <View style={styles.coverWrapper}>
-          <Image
-            source={playlist.coverSource ?? { uri: playlist.coverUrl }}
-            style={styles.coverImage}
-            contentFit="cover"
-          />
-        </View>
-
-        {/* Informações da Playlist */}
-        <View style={styles.infoSection}>
-          <Text style={styles.title}>{playlist.title}</Text>
-          <Text style={styles.subtitle}>{playlist.subtitle}</Text>
-          <Text style={styles.metaText}>
-            Feita por <Text style={styles.author}>{playlist.author}</Text> •{' '}
-            {playlist.tracksCount} músicas
-          </Text>
-        </View>
-
-        {/* Barra de Ações (Download, Salvar, Play Verde Circular) */}
-        <View style={styles.actionsBar}>
-          <View style={styles.leftActions}>
-            <Pressable
-              hitSlop={8}
-              onPress={() => toggleSavePlaylist(playlist.id)}
-              accessibilityRole="button"
-              accessibilityLabel={
-                isSaved ? 'Remover da biblioteca' : 'Adicionar a biblioteca'
-              }
-            >
-              <SymbolView
-                name={{
-                  ios: isSaved ? 'checkmark.circle.fill' : 'plus.circle',
-                  android: isSaved ? 'check_circle' : 'add_circle',
-                  web: isSaved ? 'check_circle' : 'add_circle',
-                }}
-                size={26}
-                tintColor={isSaved ? colors.primary : colors.textSecondary}
-                type="hierarchical"
-              />
-            </Pressable>
-
-            <Pressable
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Baixar playlist"
-            >
-              <SymbolView
-                name={{
-                  ios: playlist.isDownloaded
-                    ? 'arrow.down.circle.fill'
-                    : 'arrow.down.circle',
-                  android: 'download_for_offline',
-                  web: 'download_for_offline',
-                }}
-                size={26}
-                tintColor={
-                  playlist.isDownloaded
-                    ? colors.primary
-                    : colors.textSecondary
-                }
-                type="hierarchical"
-              />
-            </Pressable>
-
-            <Pressable
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Mais opcoes"
-            >
-              <SymbolView
-                name={{
-                  ios: 'ellipsis',
-                  android: 'more_vert',
-                  web: 'more_vert',
-                }}
-                size={24}
-                tintColor={colors.textSecondary}
-                type="hierarchical"
-              />
-            </Pressable>
-          </View>
-
-          {/* Botão de Play Verde Circular */}
-          <Pressable
-            style={styles.playButton}
-            onPress={handlePlayFirst}
-            accessibilityRole="button"
-            accessibilityLabel={
-              isCurrentPlaylistPlaying
-                ? 'Pausar playlist'
-                : 'Reproduzir playlist'
-            }
-          >
-            <SymbolView
-              name={{
-                ios: isCurrentPlaylistPlaying ? 'pause.fill' : 'play.fill',
-                android: isCurrentPlaylistPlaying ? 'pause' : 'play_arrow',
-                web: isCurrentPlaylistPlaying ? 'pause' : 'play_arrow',
-              }}
-              size={28}
-              tintColor={colors.onPrimary}
-              type="hierarchical"
+        refreshControl={
+          shouldFetchRemote ? (
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
             />
-          </Pressable>
-        </View>
+          ) : undefined
+        }
+        ListHeaderComponent={
+          <>
+            {/* Capa Grande em Destaque */}
+            <View style={styles.coverWrapper}>
+              <Image
+                source={playlist.coverSource ?? { uri: playlist.coverUrl }}
+                style={styles.coverImage}
+                contentFit="cover"
+              />
+            </View>
 
-        {/* Lista de Faixas da Playlist */}
-        <View style={styles.trackList}>
-          {playlist.tracks.map((track, index) => {
-            const isThisTrackSelected = currentTrack?.id === track.id;
+            {/* Informações da Playlist */}
+            <View style={styles.infoSection}>
+              <Text style={styles.title}>{playlist.title}</Text>
+              <Text style={styles.subtitle}>{playlist.subtitle}</Text>
+              <Text style={styles.metaText}>
+                Feita por <Text style={styles.author}>{playlist.author}</Text> •{' '}
+                {playlist.tracksCount} músicas
+              </Text>
+            </View>
 
-            return (
-              <Pressable
-                key={track.id}
-                style={[
-                  styles.trackRow,
-                  isThisTrackSelected && styles.trackRowSelected,
-                ]}
-                onPress={() => playTrack(track, playlist.tracks)}
-                accessibilityRole="button"
-                accessibilityLabel={`Tocar ${track.title} de ${track.artist}`}
-              >
-                <Text
-                  style={[
-                    styles.trackIndex,
-                    isThisTrackSelected && styles.trackIndexActive,
-                  ]}
-                >
-                  {index + 1}
-                </Text>
-
-                <Image
-                  source={{ uri: track.coverUrl }}
-                  style={styles.trackThumb}
-                  contentFit="cover"
-                />
-
-                <View style={styles.trackInfo}>
-                  <Text
-                    style={[
-                      styles.trackTitle,
-                      isThisTrackSelected && styles.trackTitleActive,
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {track.title}
-                  </Text>
-                  <Text style={styles.trackArtist} numberOfLines={1}>
-                    {track.artist}
-                  </Text>
-                </View>
-
-                <Text style={styles.trackDuration}>{track.duration}</Text>
-
+            {/* Barra de Ações */}
+            <View style={styles.actionsBar}>
+              <View style={styles.leftActions}>
                 <Pressable
                   hitSlop={8}
-                  style={styles.trackMoreButton}
+                  onPress={() => toggleSavePlaylist(playlist.id)}
                   accessibilityRole="button"
-                  accessibilityLabel="Opções da faixa"
+                  accessibilityLabel={
+                    isSaved ? 'Remover da biblioteca' : 'Adicionar à biblioteca'
+                  }
                 >
                   <SymbolView
                     name={{
-                      ios: 'ellipsis',
-                      android: 'more_vert',
-                      web: 'more_vert',
+                      ios: isSaved ? 'checkmark.circle.fill' : 'plus.circle',
+                      android: isSaved ? 'check_circle' : 'add_circle',
+                      web: isSaved ? 'check_circle' : 'add_circle',
                     }}
-                    size={20}
+                    size={26}
+                    tintColor={isSaved ? colors.primary : colors.textSecondary}
+                    type="hierarchical"
+                  />
+                </Pressable>
+
+                <Pressable
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Baixar playlist"
+                >
+                  <SymbolView
+                    name={{
+                      ios: playlist.isDownloaded
+                        ? 'arrow.down.circle.fill'
+                        : 'arrow.down.circle',
+                      android: 'download_for_offline',
+                      web: 'download_for_offline',
+                    }}
+                    size={26}
+                    tintColor={
+                      playlist.isDownloaded
+                        ? colors.primary
+                        : colors.textSecondary
+                    }
+                    type="hierarchical"
+                  />
+                </Pressable>
+
+                <Pressable
+                  hitSlop={8}
+                  onPress={() => router.push('/queue')}
+                  accessibilityRole="button"
+                  accessibilityLabel="Abrir fila de reprodução"
+                >
+                  <SymbolView
+                    name={{
+                      ios: 'list.bullet',
+                      android: 'queue_music',
+                      web: 'queue_music',
+                    }}
+                    size={24}
                     tintColor={colors.textSecondary}
                     type="hierarchical"
                   />
                 </Pressable>
+              </View>
+
+              {/* Botão de Play Verde Circular */}
+              <Pressable
+                style={styles.playButton}
+                onPress={handlePlayFirst}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  isCurrentPlaylistPlaying
+                    ? 'Pausar playlist'
+                    : 'Reproduzir playlist'
+                }
+              >
+                <SymbolView
+                  name={{
+                    ios: isCurrentPlaylistPlaying ? 'pause.fill' : 'play.fill',
+                    android: isCurrentPlaylistPlaying ? 'pause' : 'play_arrow',
+                    web: isCurrentPlaylistPlaying ? 'pause' : 'play_arrow',
+                  }}
+                  size={28}
+                  tintColor={colors.onPrimary}
+                  type="hierarchical"
+                />
               </Pressable>
-            );
-          })}
-        </View>
-      </ScrollView>
+            </View>
+          </>
+        }
+        ListEmptyComponent={
+          <Text style={styles.emptyTracks}>
+            Esta playlist ainda não possui faixas disponíveis.
+          </Text>
+        }
+        renderItem={({ item: track, index }) => {
+          const isThisTrackSelected = currentTrack?.id === track.id;
+
+          return (
+            <Pressable
+              style={[
+                styles.trackRow,
+                isThisTrackSelected && styles.trackRowSelected,
+              ]}
+              onPress={() => playTrack(track, playlist.tracks)}
+              accessibilityRole="button"
+              accessibilityLabel={`Tocar ${track.title} de ${track.artist}`}
+            >
+              <Text
+                style={[
+                  styles.trackIndex,
+                  isThisTrackSelected && styles.trackIndexActive,
+                ]}
+              >
+                {index + 1}
+              </Text>
+
+              <Image
+                source={{ uri: track.coverUrl }}
+                style={styles.trackThumb}
+                contentFit="cover"
+              />
+
+              <View style={styles.trackInfo}>
+                <Text
+                  style={[
+                    styles.trackTitle,
+                    isThisTrackSelected && styles.trackTitleActive,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {track.title}
+                </Text>
+                <Pressable
+                  onPress={() =>
+                    router.push({
+                      pathname: '/artist/[id]',
+                      params: {
+                        id: track.artistId ?? encodeURIComponent(track.artist),
+                      },
+                    })
+                  }
+                  accessibilityRole="button"
+                  accessibilityLabel={`Abrir artista ${track.artist}`}
+                >
+                  <Text style={styles.trackArtist} numberOfLines={1}>
+                    {track.artist}
+                  </Text>
+                </Pressable>
+              </View>
+
+              <Text style={styles.trackDuration}>{track.duration}</Text>
+
+              <Pressable
+                hitSlop={8}
+                style={styles.trackMoreButton}
+                onPress={() => addToQueue(track)}
+                accessibilityRole="button"
+                accessibilityLabel={`Adicionar ${track.title} à fila`}
+              >
+                <SymbolView
+                  name={{
+                    ios: 'text.badge.plus',
+                    android: 'playlist_add',
+                    web: 'playlist_add',
+                  }}
+                  size={20}
+                  tintColor={colors.textSecondary}
+                  type="hierarchical"
+                />
+              </Pressable>
+            </Pressable>
+          );
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -286,6 +394,7 @@ function createStyles(colors: ThemeColors, typography: ThemeTypography) {
     content: {
       paddingHorizontal: Spacing.md,
       paddingBottom: 110,
+      flexGrow: 1,
     },
     coverWrapper: {
       alignItems: 'center',
@@ -340,14 +449,11 @@ function createStyles(colors: ThemeColors, typography: ThemeTypography) {
       justifyContent: 'center',
       ...Shadows.floating,
     },
-    trackList: {
-      gap: Spacing.sm,
-      marginTop: Spacing.sm,
-    },
     trackRow: {
       flexDirection: 'row',
       alignItems: 'center',
       paddingVertical: 8,
+      marginBottom: 4,
       borderRadius: Radius.sm,
     },
     trackRowSelected: {
@@ -396,6 +502,12 @@ function createStyles(colors: ThemeColors, typography: ThemeTypography) {
     },
     trackMoreButton: {
       padding: Spacing.xs,
+    },
+    emptyTracks: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      paddingVertical: Spacing.xl,
     },
   });
 }

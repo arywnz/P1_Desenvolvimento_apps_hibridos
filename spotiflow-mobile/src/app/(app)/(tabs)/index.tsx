@@ -1,9 +1,11 @@
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
+  FlatList,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,34 +13,36 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  CURRENT_TRACK,
-  MOCK_PLAYLISTS,
-  USER_PROFILE,
-} from '../../../constants/mockData';
+import { StateView } from '../../../components/StateView';
+import { USER_PROFILE } from '../../../constants/mockData';
 import {
   Radius,
   Spacing,
   type ThemeColors,
   type ThemeTypography,
 } from '../../../constants/theme';
+import { useAuth } from '../../../context/AuthContext';
+import { useLibrary } from '../../../context/LibraryContext';
 import { usePlayer } from '../../../context/PlayerContext';
 import { useTheme } from '../../../context/ThemeContext';
+import { useFetch } from '../../../hooks/useFetch';
+import { api } from '../../../services/api';
 
-const MEDIA_FILTERS = ['Tudo', 'Musicas', 'Podcasts'];
-const QUICK_SHORTCUTS = MOCK_PLAYLISTS.slice(0, 6);
-const RECENT_TRACKS = MOCK_PLAYLISTS[0]?.tracks.length
-  ? MOCK_PLAYLISTS[0].tracks
-  : [CURRENT_TRACK];
-const DJ_PLAYLIST = MOCK_PLAYLISTS[0];
-const RECOMMENDED_MIXES = MOCK_PLAYLISTS.slice(1, 5);
+const MEDIA_FILTERS = ['Tudo', 'Músicas', 'Playlists'] as const;
 
 export default function HomeScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { colors, typography } = useTheme();
-  const [activeFilter, setActiveFilter] = useState(MEDIA_FILTERS[0]);
+  const { user } = useAuth();
+  const { playlists: localPlaylists } = useLibrary();
   const { playTrack } = usePlayer();
+  const [activeFilter, setActiveFilter] =
+    useState<(typeof MEDIA_FILTERS)[number]>('Tudo');
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchChart = useCallback(() => api.getChart(12), []);
+  const { data, loading, error, reload } = useFetch(fetchChart);
 
   const shortcutWidth = Math.floor((width - Spacing.md * 2 - Spacing.sm) / 2);
   const styles = useMemo(
@@ -46,12 +50,36 @@ export default function HomeScreen() {
     [colors, typography, shortcutWidth]
   );
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await reload();
+    setRefreshing(false);
+  };
+
+  const apiTracks = data?.tracks ?? [];
+  const apiPlaylists = data?.playlists ?? [];
+  const apiArtists = data?.artists ?? [];
+  const quickShortcuts = (
+    apiPlaylists.length > 0 ? apiPlaylists : localPlaylists
+  ).slice(0, 6);
+  const featuredTrack = apiTracks[0];
+  const showTracks = activeFilter === 'Tudo' || activeFilter === 'Músicas';
+  const showPlaylists = activeFilter === 'Tudo' || activeFilter === 'Playlists';
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
       >
         <View style={styles.header}>
           <View style={styles.profileGroup}>
@@ -70,8 +98,12 @@ export default function HomeScreen() {
               />
             </Pressable>
             <View>
-              <Text style={styles.eyebrow}>{USER_PROFILE.plan}</Text>
-              <Text style={styles.title}>Boa noite</Text>
+              <Text style={styles.eyebrow}>
+                {user?.plan ?? USER_PROFILE.plan}
+              </Text>
+              <Text style={styles.title}>
+                Boa noite{user?.name ? `, ${user.name.split(' ')[0]}` : ''}
+              </Text>
             </View>
           </View>
         </View>
@@ -101,132 +133,190 @@ export default function HomeScreen() {
           })}
         </View>
 
-        <View style={styles.shortcutGrid}>
-          {QUICK_SHORTCUTS.map((playlist) => (
-            <Pressable
-              key={playlist.id}
-              style={styles.shortcutCard}
-              onPress={() =>
-                router.push({
-                  pathname: '/playlist/[id]',
-                  params: { id: playlist.id },
-                })
-              }
-              accessibilityRole="button"
-              accessibilityLabel={`Abrir ${playlist.title}`}
-            >
+        <StateView
+          loading={loading && !data}
+          error={!data ? error : null}
+          isEmpty={
+            Boolean(data) && apiTracks.length === 0 && apiPlaylists.length === 0
+          }
+          loadingLabel="Buscando sucessos na Deezer..."
+          emptyTitle="Nenhuma faixa encontrada"
+          emptyDescription="Puxe para baixo ou toque em atualizar para tentar novamente."
+          onRetry={() => {
+            void reload();
+          }}
+        >
+          {showPlaylists && (
+            <View style={styles.shortcutGrid}>
+              {quickShortcuts.map((playlist) => (
+                <Pressable
+                  key={playlist.id}
+                  style={styles.shortcutCard}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/playlist/[id]',
+                      params: { id: playlist.id },
+                    })
+                  }
+                  accessibilityRole="button"
+                  accessibilityLabel={`Abrir ${playlist.title}`}
+                >
+                  <Image
+                    source={playlist.coverSource ?? { uri: playlist.coverUrl }}
+                    style={styles.shortcutCover}
+                    contentFit="cover"
+                  />
+                  <Text style={styles.shortcutTitle} numberOfLines={2}>
+                    {playlist.title}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          )}
+
+          {showTracks && apiTracks.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Em alta agora</Text>
+              <FlatList
+                horizontal
+                data={apiTracks}
+                keyExtractor={(item) => item.id}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.recentList}
+                renderItem={({ item: track }) => (
+                  <Pressable
+                    style={styles.recentCard}
+                    onPress={() => playTrack(track, apiTracks)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Tocar ${track.title}`}
+                  >
+                    <Image
+                      source={{ uri: track.coverUrl }}
+                      style={styles.recentCover}
+                      contentFit="cover"
+                    />
+                    <Text style={styles.recentTitle} numberOfLines={2}>
+                      {track.title}
+                    </Text>
+                    <Text style={styles.recentSubtitle} numberOfLines={1}>
+                      {track.artist}
+                    </Text>
+                  </Pressable>
+                )}
+              />
+            </View>
+          )}
+
+          {featuredTrack && (
+            <View style={styles.djCard}>
               <Image
-                source={playlist.coverSource ?? { uri: playlist.coverUrl }}
-                style={styles.shortcutCover}
+                source={{ uri: featuredTrack.coverUrl }}
+                style={styles.djCover}
                 contentFit="cover"
               />
-              <Text style={styles.shortcutTitle} numberOfLines={2}>
-                {playlist.title}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Tocadas recentemente</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.recentList}
-          >
-            {RECENT_TRACKS.map((track) => (
-              <Pressable
-                key={track.id}
-                style={styles.recentCard}
-                onPress={() => playTrack(track)}
-                accessibilityRole="button"
-                accessibilityLabel={`Tocar ${track.title}`}
-              >
-                <Image
-                  source={{ uri: track.coverUrl }}
-                  style={styles.recentCover}
-                  contentFit="cover"
-                />
-                <Text style={styles.recentTitle} numberOfLines={2}>
-                  {track.title}
+              <View style={styles.djContent}>
+                <Text style={styles.djEyebrow}>DJ do dia • Top 1</Text>
+                <Text style={styles.djTitle} numberOfLines={1}>
+                  {featuredTrack.title}
                 </Text>
-                <Text style={styles.recentSubtitle} numberOfLines={1}>
-                  {track.artist}
+                <Text style={styles.djSubtitle} numberOfLines={2}>
+                  {featuredTrack.artist} • {featuredTrack.album}
                 </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </View>
+                <Pressable
+                  style={styles.djButton}
+                  onPress={() => playTrack(featuredTrack, apiTracks)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Tocar ${featuredTrack.title}`}
+                >
+                  <SymbolView
+                    name={{
+                      ios: 'play.fill',
+                      android: 'play_arrow',
+                      web: 'play_arrow',
+                    }}
+                    size={18}
+                    tintColor={colors.onPrimary}
+                    type="hierarchical"
+                  />
+                  <Text style={styles.djButtonText}>Tocar agora</Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
 
-        <View style={styles.djCard}>
-          <Image
-            source={DJ_PLAYLIST.coverSource ?? { uri: DJ_PLAYLIST.coverUrl }}
-            style={styles.djCover}
-            contentFit="cover"
-          />
-          <View style={styles.djContent}>
-            <Text style={styles.djEyebrow}>DJ do dia</Text>
-            <Text style={styles.djTitle}>Sua selecao personalizada</Text>
-            <Text style={styles.djSubtitle} numberOfLines={2}>
-              Faixas recentes, classicos e mixes com base no que voce mais
-              ouviu.
-            </Text>
-            <Pressable
-              style={styles.djButton}
-              onPress={() => playTrack(CURRENT_TRACK)}
-              accessibilityRole="button"
-              accessibilityLabel={`Tocar ${CURRENT_TRACK.title}`}
-            >
-              <SymbolView
-                name={{
-                  ios: 'play.fill',
-                  android: 'play_arrow',
-                  web: 'play_arrow',
-                }}
-                size={18}
-                tintColor={colors.onPrimary}
-                type="hierarchical"
+          {apiArtists.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Artistas em destaque</Text>
+              <FlatList
+                horizontal
+                data={apiArtists}
+                keyExtractor={(item) => item.id}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.recentList}
+                renderItem={({ item: artist }) => (
+                  <Pressable
+                    style={styles.artistCard}
+                    onPress={() =>
+                      router.push({
+                        pathname: '/artist/[id]',
+                        params: { id: artist.id },
+                      })
+                    }
+                    accessibilityRole="button"
+                    accessibilityLabel={`Abrir artista ${artist.name}`}
+                  >
+                    <Image
+                      source={{ uri: artist.pictureUrl }}
+                      style={styles.artistAvatar}
+                      contentFit="cover"
+                    />
+                    <Text style={styles.artistName} numberOfLines={1}>
+                      {artist.name}
+                    </Text>
+                  </Pressable>
+                )}
               />
-              <Text style={styles.djButtonText}>Tocar agora</Text>
-            </Pressable>
-          </View>
-        </View>
+            </View>
+          )}
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Mixes recomendados</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.mixList}
-          >
-            {RECOMMENDED_MIXES.map((playlist) => (
-              <Pressable
-                key={playlist.id}
-                style={styles.mixCard}
-                onPress={() =>
-                  router.push({
-                    pathname: '/playlist/[id]',
-                    params: { id: playlist.id },
-                  })
-                }
-                accessibilityRole="button"
-                accessibilityLabel={`Abrir mix ${playlist.title}`}
-              >
-                <Image
-                  source={playlist.coverSource ?? { uri: playlist.coverUrl }}
-                  style={styles.mixCover}
-                  contentFit="cover"
-                />
-                <Text style={styles.mixTitle} numberOfLines={2}>
-                  {playlist.title}
-                </Text>
-                <Text style={styles.mixSubtitle} numberOfLines={2}>
-                  {playlist.subtitle}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </View>
+          {showPlaylists && apiPlaylists.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Playlists recomendadas</Text>
+              <FlatList
+                horizontal
+                data={apiPlaylists}
+                keyExtractor={(item) => item.id}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.mixList}
+                renderItem={({ item: playlist }) => (
+                  <Pressable
+                    style={styles.mixCard}
+                    onPress={() =>
+                      router.push({
+                        pathname: '/playlist/[id]',
+                        params: { id: playlist.id },
+                      })
+                    }
+                    accessibilityRole="button"
+                    accessibilityLabel={`Abrir playlist ${playlist.title}`}
+                  >
+                    <Image
+                      source={playlist.coverSource ?? { uri: playlist.coverUrl }}
+                      style={styles.mixCover}
+                      contentFit="cover"
+                    />
+                    <Text style={styles.mixTitle} numberOfLines={2}>
+                      {playlist.title}
+                    </Text>
+                    <Text style={styles.mixSubtitle} numberOfLines={2}>
+                      {playlist.subtitle}
+                    </Text>
+                  </Pressable>
+                )}
+              />
+            </View>
+          )}
+        </StateView>
       </ScrollView>
     </SafeAreaView>
   );
@@ -248,7 +338,8 @@ function createStyles(
     content: {
       paddingHorizontal: Spacing.md,
       paddingTop: Spacing.md,
-      paddingBottom: 96,
+      paddingBottom: 110,
+      flexGrow: 1,
     },
     header: {
       marginBottom: Spacing.md,
@@ -261,16 +352,15 @@ function createStyles(
     avatar: {
       width: 36,
       height: 36,
-      borderRadius: 18,
-      backgroundColor: colors.backgroundCard,
+      borderRadius: Radius.pill,
     },
     eyebrow: {
-      ...typography.bodySmall,
-      marginBottom: 2,
+      ...typography.caption,
+      color: colors.primary,
+      fontWeight: '700',
     },
     title: {
       ...typography.titleLarge,
-      fontSize: 24,
     },
     filters: {
       flexDirection: 'row',
@@ -278,21 +368,22 @@ function createStyles(
       marginBottom: Spacing.lg,
     },
     filterPill: {
-      minHeight: 34,
-      borderRadius: Radius.pill,
-      justifyContent: 'center',
       paddingHorizontal: Spacing.md,
-      backgroundColor: colors.backgroundCard,
+      paddingVertical: Spacing.sm,
+      borderRadius: Radius.pill,
+      backgroundColor: colors.backgroundElevated,
     },
     filterPillActive: {
       backgroundColor: colors.primary,
     },
     filterText: {
-      ...typography.bodyMedium,
-      fontWeight: '700',
+      ...typography.bodySmall,
+      color: colors.textPrimary,
+      fontWeight: '600',
     },
     filterTextActive: {
       color: colors.onPrimary,
+      fontWeight: '700',
     },
     shortcutGrid: {
       flexDirection: 'row',
@@ -302,34 +393,32 @@ function createStyles(
     },
     shortcutCard: {
       width: shortcutWidth,
-      minHeight: 64,
+      minHeight: 58,
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.backgroundElevated,
       borderRadius: Radius.sm,
       overflow: 'hidden',
-      alignItems: 'center',
-      flexDirection: 'row',
-      backgroundColor: colors.backgroundCard,
     },
     shortcutCover: {
-      width: 64,
-      height: 64,
-      backgroundColor: colors.surfaceCard,
+      width: 58,
+      height: 58,
     },
     shortcutTitle: {
-      ...typography.bodyMedium,
+      ...typography.bodySmall,
       flex: 1,
-      paddingHorizontal: Spacing.sm,
       fontWeight: '700',
+      paddingHorizontal: Spacing.sm,
     },
     section: {
-      gap: Spacing.md,
       marginBottom: Spacing.xl,
     },
     sectionTitle: {
-      ...typography.titleLarge,
+      ...typography.titleMedium,
+      marginBottom: Spacing.md,
     },
     recentList: {
       gap: Spacing.md,
-      paddingRight: Spacing.md,
     },
     recentCard: {
       width: 132,
@@ -337,80 +426,91 @@ function createStyles(
     recentCover: {
       width: 132,
       height: 132,
-      borderRadius: Radius.sm,
+      borderRadius: Radius.md,
       marginBottom: Spacing.sm,
-      backgroundColor: colors.surfaceCard,
     },
     recentTitle: {
-      ...typography.bodyMedium,
+      ...typography.bodySmall,
       fontWeight: '700',
       marginBottom: 2,
     },
     recentSubtitle: {
+      ...typography.caption,
+    },
+    artistCard: {
+      width: 108,
+      alignItems: 'center',
+      gap: Spacing.xs,
+    },
+    artistAvatar: {
+      width: 96,
+      height: 96,
+      borderRadius: Radius.pill,
+    },
+    artistName: {
       ...typography.bodySmall,
+      fontWeight: '600',
+      textAlign: 'center',
     },
     djCard: {
-      minHeight: 172,
-      borderRadius: Radius.md,
-      overflow: 'hidden',
       flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surfaceCard,
+      borderRadius: Radius.lg,
+      padding: Spacing.md,
+      gap: Spacing.md,
       marginBottom: Spacing.xl,
-      backgroundColor: colors.playerBackground,
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     djCover: {
-      width: 136,
-      minHeight: 172,
-      backgroundColor: colors.surfaceCard,
+      width: 96,
+      height: 96,
+      borderRadius: Radius.md,
     },
     djContent: {
       flex: 1,
-      padding: Spacing.md,
-      justifyContent: 'space-between',
     },
     djEyebrow: {
       ...typography.caption,
       color: colors.primary,
       fontWeight: '700',
-      textTransform: 'uppercase',
+      marginBottom: 2,
     },
     djTitle: {
       ...typography.titleMedium,
-      color: colors.playerTextPrimary,
-      fontSize: 18,
+      marginBottom: 4,
     },
     djSubtitle: {
       ...typography.bodySmall,
-      color: colors.playerTextSecondary,
-      lineHeight: 17,
+      marginBottom: Spacing.md,
     },
     djButton: {
-      height: 34,
-      borderRadius: Radius.pill,
       alignSelf: 'flex-start',
-      alignItems: 'center',
       flexDirection: 'row',
-      gap: Spacing.xs,
-      paddingHorizontal: Spacing.md,
+      alignItems: 'center',
+      gap: 6,
       backgroundColor: colors.primary,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      borderRadius: Radius.pill,
     },
     djButtonText: {
-      ...typography.bodyMedium,
+      ...typography.bodySmall,
       color: colors.onPrimary,
       fontWeight: '700',
     },
     mixList: {
       gap: Spacing.md,
-      paddingRight: Spacing.md,
     },
     mixCard: {
-      width: 150,
+      width: 148,
     },
     mixCover: {
-      width: 150,
-      height: 150,
-      borderRadius: Radius.sm,
+      width: 148,
+      height: 148,
+      borderRadius: Radius.md,
       marginBottom: Spacing.sm,
-      backgroundColor: colors.surfaceCard,
     },
     mixTitle: {
       ...typography.bodyMedium,
@@ -418,8 +518,7 @@ function createStyles(
       marginBottom: 2,
     },
     mixSubtitle: {
-      ...typography.bodySmall,
-      lineHeight: 16,
+      ...typography.caption,
     },
   });
 }

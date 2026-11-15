@@ -1,10 +1,19 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import {
+  FlatList,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ResourceNotFound } from '../../../components/ResourceNotFound';
+import { StateView } from '../../../components/StateView';
 import { CURRENT_TRACK, type Track } from '../../../constants/mockData';
 import {
   Radius,
@@ -16,6 +25,8 @@ import {
 import { useLibrary } from '../../../context/LibraryContext';
 import { usePlayer } from '../../../context/PlayerContext';
 import { useTheme } from '../../../context/ThemeContext';
+import { useFetch } from '../../../hooks/useFetch';
+import { api } from '../../../services/api';
 
 export default function ArtistDetailScreen() {
   const router = useRouter();
@@ -28,12 +39,23 @@ export default function ArtistDetailScreen() {
   );
   const { allPlaylists, followedArtists, toggleFollowArtist } = useLibrary();
   const { playTrack, currentTrack, isPlaying, togglePlayPause } = usePlayer();
+  const [refreshing, setRefreshing] = useState(false);
 
-  const decodedName = id ? decodeURIComponent(id).trim() : '';
+  const rawId = id ?? '';
+  const isNumericId = /^\d+$/.test(rawId);
+  const decodedName = rawId ? decodeURIComponent(rawId).trim() : '';
   const normalizedTarget = decodedName.toLowerCase();
 
-  // Reúne faixas únicas do catálogo local pertencentes ao artista solicitado
-  const allTracks: Track[] = useMemo(() => {
+  const fetchArtist = useCallback(() => api.getArtist(rawId), [rawId]);
+  const {
+    data: remoteArtist,
+    loading,
+    error,
+    reload,
+  } = useFetch(fetchArtist, { enabled: isNumericId });
+
+  const localTracks: Track[] = useMemo(() => {
+    if (isNumericId) return [];
     const map = new Map<string, Track>();
     map.set(CURRENT_TRACK.id, CURRENT_TRACK);
     for (const playlist of allPlaylists) {
@@ -43,28 +65,32 @@ export default function ArtistDetailScreen() {
         }
       }
     }
-    return Array.from(map.values());
-  }, [allPlaylists]);
+    return Array.from(map.values()).filter(
+      (track) => track.artist.toLowerCase() === normalizedTarget
+    );
+  }, [allPlaylists, isNumericId, normalizedTarget]);
 
-  const artistTracks = useMemo(
-    () =>
-      allTracks.filter(
-        (track) => track.artist.toLowerCase() === normalizedTarget
-      ),
-    [allTracks, normalizedTarget]
-  );
+  const artistName = remoteArtist?.name ?? localTracks[0]?.artist ?? '';
+  const artistTracks = remoteArtist?.topTracks ?? localTracks;
+  const coverUrl =
+    remoteArtist?.pictureUrl || localTracks[0]?.coverUrl || CURRENT_TRACK.coverUrl;
+  const followKey = isNumericId ? rawId : normalizedTarget;
 
-  const relatedPlaylists = useMemo(
-    () =>
-      allPlaylists.filter((playlist) =>
-        playlist.tracks.some(
-          (track) => track.artist.toLowerCase() === normalizedTarget
-        )
-      ),
-    [allPlaylists, normalizedTarget]
-  );
+  const relatedPlaylists = useMemo(() => {
+    const compareName = artistName.toLowerCase();
+    return allPlaylists.filter((playlist) =>
+      playlist.tracks.some((track) => track.artist.toLowerCase() === compareName)
+    );
+  }, [allPlaylists, artistName]);
 
-  if (!decodedName || artistTracks.length === 0) {
+  const handleRefresh = async () => {
+    if (!isNumericId) return;
+    setRefreshing(true);
+    await reload();
+    setRefreshing(false);
+  };
+
+  if (!rawId || (!isNumericId && localTracks.length === 0)) {
     return (
       <ResourceNotFound
         title="Artista não encontrado"
@@ -73,14 +99,53 @@ export default function ArtistDetailScreen() {
     );
   }
 
-  const artistName = artistTracks[0].artist;
-  const coverUrl = artistTracks[0].coverUrl;
-  const isFollowing = followedArtists.includes(normalizedTarget);
+  if (isNumericId && (loading || error || !remoteArtist)) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.topBar}>
+          <Pressable
+            style={styles.backButton}
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Voltar"
+          >
+            <SymbolView
+              name={{
+                ios: 'chevron.backward',
+                android: 'arrow_back',
+                web: 'arrow_back',
+              }}
+              size={24}
+              tintColor={colors.textPrimary}
+              type="hierarchical"
+            />
+          </Pressable>
+          <Text style={styles.topBarTitle}>Artista</Text>
+        </View>
+        <StateView
+          loading={loading}
+          error={error}
+          isEmpty={!remoteArtist}
+          loadingLabel="Carregando artista da Deezer..."
+          emptyTitle="Artista não encontrado"
+          emptyDescription="Não localizamos esse artista na API."
+          onRetry={() => {
+            void reload();
+          }}
+        >
+          {null}
+        </StateView>
+      </SafeAreaView>
+    );
+  }
+
+  const isFollowing = followedArtists.includes(followKey);
   const isArtistPlaying =
     isPlaying &&
     artistTracks.some((track) => track.id === currentTrack?.id);
 
   const handlePlayArtist = () => {
+    if (artistTracks.length === 0) return;
     if (artistTracks.some((track) => track.id === currentTrack?.id)) {
       togglePlayPause();
     } else {
@@ -109,146 +174,166 @@ export default function ArtistDetailScreen() {
           />
         </Pressable>
         <Text style={styles.topBarTitle} numberOfLines={1}>
-          Artista
+          {artistName}
         </Text>
       </View>
 
-      <ScrollView
+      <FlatList
+        data={artistTracks}
+        keyExtractor={(item) => item.id}
         style={styles.container}
         contentContainerStyle={[
           styles.content,
           { paddingBottom: insets.bottom + Spacing.xl },
         ]}
         showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.heroCard}>
-          <Image
-            source={{ uri: coverUrl }}
-            style={styles.artistAvatar}
-            contentFit="cover"
-          />
-          <Text style={styles.artistName}>{artistName}</Text>
-          <Text style={styles.artistMeta}>
-            {artistTracks.length}{' '}
-            {artistTracks.length === 1 ? 'faixa no catálogo' : 'faixas no catálogo'}
-          </Text>
+        refreshControl={
+          isNumericId ? (
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          ) : undefined
+        }
+        ListHeaderComponent={
+          <>
+            <View style={styles.heroCard}>
+              <Image
+                source={{ uri: coverUrl }}
+                style={styles.artistAvatar}
+                contentFit="cover"
+              />
+              <Text style={styles.artistName}>{artistName}</Text>
+              <Text style={styles.artistMeta}>
+                {remoteArtist?.fansCount
+                  ? `${remoteArtist.fansCount.toLocaleString('pt-BR')} fãs • `
+                  : ''}
+                {artistTracks.length}{' '}
+                {artistTracks.length === 1
+                  ? 'faixa principal'
+                  : 'faixas principais'}
+              </Text>
 
-          <View style={styles.heroActions}>
+              <View style={styles.heroActions}>
+                <Pressable
+                  style={[
+                    styles.followButton,
+                    isFollowing && styles.followButtonActive,
+                  ]}
+                  onPress={() => toggleFollowArtist(followKey)}
+                  accessibilityRole="button"
+                >
+                  <Text
+                    style={[
+                      styles.followButtonText,
+                      isFollowing && styles.followButtonTextActive,
+                    ]}
+                  >
+                    {isFollowing ? 'Seguindo' : 'Seguir'}
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  style={styles.playButton}
+                  onPress={handlePlayArtist}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Reproduzir músicas de ${artistName}`}
+                >
+                  <SymbolView
+                    name={{
+                      ios: isArtistPlaying ? 'pause.fill' : 'play.fill',
+                      android: isArtistPlaying ? 'pause' : 'play_arrow',
+                      web: isArtistPlaying ? 'pause' : 'play_arrow',
+                    }}
+                    size={24}
+                    tintColor={colors.onPrimary}
+                    type="hierarchical"
+                  />
+                </Pressable>
+              </View>
+            </View>
+
+            <Text style={[styles.sectionTitle, styles.sectionSpacing]}>
+              Populares
+            </Text>
+          </>
+        }
+        ListFooterComponent={
+          relatedPlaylists.length > 0 ? (
+            <View style={styles.footerSection}>
+              <Text style={styles.sectionTitle}>Presente nas playlists</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.playlistList}
+              >
+                {relatedPlaylists.map((playlist) => (
+                  <Pressable
+                    key={playlist.id}
+                    style={styles.playlistCard}
+                    onPress={() =>
+                      router.push({
+                        pathname: '/playlist/[id]',
+                        params: { id: playlist.id },
+                      })
+                    }
+                  >
+                    <Image
+                      source={playlist.coverSource ?? { uri: playlist.coverUrl }}
+                      style={styles.playlistCover}
+                      contentFit="cover"
+                    />
+                    <Text style={styles.playlistTitle} numberOfLines={2}>
+                      {playlist.title}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </View>
+          ) : undefined
+        }
+        renderItem={({ item: track, index }) => {
+          const isSelected = currentTrack?.id === track.id;
+          return (
             <Pressable
-              style={[
-                styles.followButton,
-                isFollowing && styles.followButtonActive,
-              ]}
-              onPress={() => toggleFollowArtist(normalizedTarget)}
+              style={styles.trackRow}
+              onPress={() => playTrack(track, artistTracks)}
               accessibilityRole="button"
+              accessibilityLabel={`Tocar ${track.title}`}
             >
               <Text
                 style={[
-                  styles.followButtonText,
-                  isFollowing && styles.followButtonTextActive,
+                  styles.trackIndex,
+                  isSelected && styles.trackTitleActive,
                 ]}
               >
-                {isFollowing ? 'Seguindo' : 'Seguir'}
+                {index + 1}
               </Text>
-            </Pressable>
-
-            <Pressable
-              style={styles.playButton}
-              onPress={handlePlayArtist}
-              accessibilityRole="button"
-              accessibilityLabel={`Reproduzir músicas de ${artistName}`}
-            >
-              <SymbolView
-                name={{
-                  ios: isArtistPlaying ? 'pause.fill' : 'play.fill',
-                  android: isArtistPlaying ? 'pause' : 'play_arrow',
-                  web: isArtistPlaying ? 'pause' : 'play_arrow',
-                }}
-                size={24}
-                tintColor={colors.onPrimary}
-                type="hierarchical"
+              <Image
+                source={{ uri: track.coverUrl }}
+                style={styles.trackCover}
+                contentFit="cover"
               />
-            </Pressable>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Populares</Text>
-          {artistTracks.map((track, index) => {
-            const isSelected = currentTrack?.id === track.id;
-            return (
-              <Pressable
-                key={track.id}
-                style={styles.trackRow}
-                onPress={() => playTrack(track, artistTracks)}
-                accessibilityRole="button"
-                accessibilityLabel={`Tocar ${track.title}`}
-              >
+              <View style={styles.trackInfo}>
                 <Text
                   style={[
-                    styles.trackIndex,
+                    styles.trackTitle,
                     isSelected && styles.trackTitleActive,
                   ]}
+                  numberOfLines={1}
                 >
-                  {index + 1}
+                  {track.title}
                 </Text>
-                <Image
-                  source={{ uri: track.coverUrl }}
-                  style={styles.trackCover}
-                  contentFit="cover"
-                />
-                <View style={styles.trackInfo}>
-                  <Text
-                    style={[
-                      styles.trackTitle,
-                      isSelected && styles.trackTitleActive,
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {track.title}
-                  </Text>
-                  <Text style={styles.trackSubtitle} numberOfLines={1}>
-                    {track.album} • {track.duration}
-                  </Text>
-                </View>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        {relatedPlaylists.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Presente nas playlists</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.playlistList}
-            >
-              {relatedPlaylists.map((playlist) => (
-                <Pressable
-                  key={playlist.id}
-                  style={styles.playlistCard}
-                  onPress={() =>
-                    router.push({
-                      pathname: '/playlist/[id]',
-                      params: { id: playlist.id },
-                    })
-                  }
-                >
-                  <Image
-                    source={playlist.coverSource ?? { uri: playlist.coverUrl }}
-                    style={styles.playlistCover}
-                    contentFit="cover"
-                  />
-                  <Text style={styles.playlistTitle} numberOfLines={2}>
-                    {playlist.title}
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
-        )}
-      </ScrollView>
+                <Text style={styles.trackSubtitle} numberOfLines={1}>
+                  {track.album} • {track.duration}
+                </Text>
+              </View>
+            </Pressable>
+          );
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -284,7 +369,7 @@ function createStyles(colors: ThemeColors, typography: ThemeTypography) {
     },
     content: {
       padding: Spacing.lg,
-      gap: Spacing.lg,
+      gap: Spacing.xs,
     },
     heroCard: {
       alignItems: 'center',
@@ -342,16 +427,21 @@ function createStyles(colors: ThemeColors, typography: ThemeTypography) {
       justifyContent: 'center',
       ...Shadows.floating,
     },
-    section: {
-      gap: Spacing.sm,
-    },
     sectionTitle: {
       ...typography.titleMedium,
+    },
+    sectionSpacing: {
+      marginTop: Spacing.md,
+      marginBottom: Spacing.xs,
+    },
+    footerSection: {
+      marginTop: Spacing.lg,
+      gap: Spacing.sm,
     },
     trackRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingVertical: Spacing.xs,
+      paddingVertical: Spacing.xs + 2,
       gap: Spacing.sm,
     },
     trackIndex: {
