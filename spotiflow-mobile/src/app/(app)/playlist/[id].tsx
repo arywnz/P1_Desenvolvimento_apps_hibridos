@@ -4,16 +4,17 @@ import { SymbolView } from 'expo-symbols';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FRIENDS_ACTIVITY, MOCK_PLAYLISTS } from '../../constants/mockData';
+import { ResourceNotFound } from '../../../components/ResourceNotFound';
+import { FRIENDS_ACTIVITY, MOCK_PLAYLISTS } from '../../../constants/mockData';
 import {
   Radius,
   Shadows,
   Spacing,
   type ThemeColors,
   type ThemeTypography,
-} from '../../constants/theme';
-import { usePlayer } from '../../context/PlayerContext';
-import { useTheme } from '../../context/ThemeContext';
+} from '../../../constants/theme';
+import { usePlayer } from '../../../context/PlayerContext';
+import { useTheme } from '../../../context/ThemeContext';
 
 export default function PlaylistDetailScreen() {
   const router = useRouter();
@@ -24,6 +25,7 @@ export default function PlaylistDetailScreen() {
     [colors, typography]
   );
   const { playTrack, currentTrack, isPlaying, togglePlayPause } = usePlayer();
+  const [isSaved, setIsSaved] = useState(false);
 
   // Junta todas as playlists (do usuário e dos amigos) para achar pelo ID
   const allPlaylists = [
@@ -31,10 +33,16 @@ export default function PlaylistDetailScreen() {
     ...FRIENDS_ACTIVITY.flatMap((f) => f.playlists),
   ];
 
-  const playlist =
-    allPlaylists.find((p) => p.id === id) || MOCK_PLAYLISTS[0];
+  const playlist = allPlaylists.find((p) => p.id === id);
 
-  const [isSaved, setIsSaved] = useState(false);
+  if (!playlist) {
+    return (
+      <ResourceNotFound
+        title="Playlist não encontrada"
+        description="Não localizamos nenhuma playlist com esse identificador."
+      />
+    );
+  }
 
   const isCurrentPlaylistPlaying =
     isPlaying && playlist.tracks.some((t) => t.id === currentTrack?.id);

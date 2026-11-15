@@ -15,15 +15,15 @@ import {
   CURRENT_TRACK,
   MOCK_PLAYLISTS,
   USER_PROFILE,
-} from '../../constants/mockData';
+} from '../../../constants/mockData';
 import {
   Radius,
   Spacing,
   type ThemeColors,
   type ThemeTypography,
-} from '../../constants/theme';
-import { usePlayer } from '../../context/PlayerContext';
-import { useTheme } from '../../context/ThemeContext';
+} from '../../../constants/theme';
+import { usePlayer } from '../../../context/PlayerContext';
+import { useTheme } from '../../../context/ThemeContext';
 
 const MEDIA_FILTERS = ['Tudo', 'Musicas', 'Podcasts'];
 const QUICK_SHORTCUTS = MOCK_PLAYLISTS.slice(0, 6);

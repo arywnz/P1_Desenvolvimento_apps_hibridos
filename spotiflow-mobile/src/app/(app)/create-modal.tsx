@@ -15,8 +15,8 @@ import {
   Spacing,
   type ThemeColors,
   type ThemeTypography,
-} from '../constants/theme';
-import { useTheme } from '../context/ThemeContext';
+} from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 
 interface CreateOption {
   id: string;
@@ -95,7 +95,7 @@ export default function CreateModal() {
     setTimeout(() => {
       setCreatedFeedback(null);
       router.back();
-      router.push('/(tabs)/library');
+      router.push('/library');
     }, 800);
   };
 

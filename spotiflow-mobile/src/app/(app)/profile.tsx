@@ -8,14 +8,15 @@ import {
   DIRECT_MESSAGES,
   FRIENDS_ACTIVITY,
   USER_PROFILE,
-} from '../constants/mockData';
+} from '../../constants/mockData';
 import {
   Radius,
   Spacing,
   type ThemeColors,
   type ThemeTypography,
-} from '../constants/theme';
-import { useTheme } from '../context/ThemeContext';
+} from '../../constants/theme';
+import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 
 const FRIEND_PLAYLISTS = FRIENDS_ACTIVITY.flatMap((friend) =>
   friend.playlists.map((playlist) => ({
@@ -28,6 +29,7 @@ const FRIEND_PLAYLISTS = FRIENDS_ACTIVITY.flatMap((friend) =>
 export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { user, signOut } = useAuth();
   const { colors, typography } = useTheme();
   const styles = useMemo(
     () => createStyles(colors, typography),
@@ -75,8 +77,10 @@ export default function ProfileScreen() {
             contentFit="cover"
           />
           <View style={styles.profileTextGroup}>
-            <Text style={styles.userName}>{USER_PROFILE.name}</Text>
-            <Text style={styles.viewProfileText}>Ver perfil</Text>
+            <Text style={styles.userName}>{user?.name ?? USER_PROFILE.name}</Text>
+            <Text style={styles.viewProfileText}>
+              {user?.email ?? 'Ver perfil'}
+            </Text>
           </View>
         </View>
 
@@ -278,6 +282,35 @@ export default function ProfileScreen() {
               tintColor={colors.textSecondary}
               type="hierarchical"
             />
+          </Pressable>
+
+          <Pressable
+            style={styles.menuRow}
+            onPress={() => {
+              signOut();
+              router.replace('/login');
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Sair da conta"
+          >
+            <SymbolView
+              name={{
+                ios: 'rectangle.portrait.and.arrow.right',
+                android: 'logout',
+                web: 'logout',
+              }}
+              size={24}
+              tintColor={colors.danger}
+              type="hierarchical"
+            />
+            <View style={styles.menuTextGroup}>
+              <Text style={[styles.menuTitle, { color: colors.danger }]}>
+                Sair da conta
+              </Text>
+              <Text style={styles.menuSubtitle}>
+                Encerrar sessão atual neste aparelho
+              </Text>
+            </View>
           </Pressable>
         </View>
 

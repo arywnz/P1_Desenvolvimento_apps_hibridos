@@ -13,15 +13,16 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { type ChatMessage, DIRECT_MESSAGES } from '../constants/mockData';
+import { ResourceNotFound } from '../../components/ResourceNotFound';
+import { type ChatMessage, DIRECT_MESSAGES } from '../../constants/mockData';
 import {
   Radius,
   Spacing,
   type ThemeColors,
   type ThemeTypography,
-} from '../constants/theme';
-import { usePlayer } from '../context/PlayerContext';
-import { useTheme } from '../context/ThemeContext';
+} from '../../constants/theme';
+import { usePlayer } from '../../context/PlayerContext';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function ChatScreen() {
   const router = useRouter();
@@ -34,11 +35,21 @@ export default function ChatScreen() {
   );
   const { playTrack } = usePlayer();
 
-  const conversation =
-    DIRECT_MESSAGES.find((dm) => dm.id === id) || DIRECT_MESSAGES[0];
+  const conversation = DIRECT_MESSAGES.find((dm) => dm.id === id);
 
-  const [messages, setMessages] = useState<ChatMessage[]>(conversation.messages);
+  const [messages, setMessages] = useState<ChatMessage[]>(
+    conversation?.messages ?? []
+  );
   const [inputText, setInputText] = useState('');
+
+  if (!conversation) {
+    return (
+      <ResourceNotFound
+        title="Conversa não encontrada"
+        description="Não localizamos essa conversa no seu histórico de mensagens."
+      />
+    );
+  }
 
   const handleSendMessage = () => {
     if (!inputText.trim()) return;

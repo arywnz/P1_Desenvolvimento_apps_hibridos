@@ -19,9 +19,9 @@ import {
   Spacing,
   type ThemeColors,
   type ThemeTypography,
-} from '../constants/theme';
-import { usePlayer } from '../context/PlayerContext';
-import { useTheme } from '../context/ThemeContext';
+} from '../../constants/theme';
+import { usePlayer } from '../../context/PlayerContext';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function PlayerScreen() {
   const router = useRouter();

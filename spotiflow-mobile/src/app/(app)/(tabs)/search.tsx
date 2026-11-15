@@ -16,14 +16,14 @@ import {
   MOCK_PLAYLISTS,
   SEARCH_CATEGORIES,
   USER_PROFILE,
-} from '../../constants/mockData';
+} from '../../../constants/mockData';
 import {
   Radius,
   Spacing,
   type ThemeColors,
   type ThemeTypography,
-} from '../../constants/theme';
-import { useTheme } from '../../context/ThemeContext';
+} from '../../../constants/theme';
+import { useTheme } from '../../../context/ThemeContext';
 
 export default function SearchScreen() {
   const router = useRouter();

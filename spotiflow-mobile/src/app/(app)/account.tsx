@@ -3,15 +3,15 @@ import { SymbolView } from 'expo-symbols';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MOCK_PLAYLISTS, USER_PROFILE } from '../constants/mockData';
+import { MOCK_PLAYLISTS, USER_PROFILE } from '../../constants/mockData';
 import {
   Radius,
   Spacing,
   type ThemeColors,
   type ThemeTypography,
-} from '../constants/theme';
-import { usePlayer } from '../context/PlayerContext';
-import { useTheme } from '../context/ThemeContext';
+} from '../../constants/theme';
+import { usePlayer } from '../../context/PlayerContext';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function AccountScreen() {
   const router = useRouter();

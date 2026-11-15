@@ -4,15 +4,16 @@ import { SymbolView } from 'expo-symbols';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { FRIENDS_ACTIVITY, MOCK_PLAYLISTS } from '../constants/mockData';
+import { ResourceNotFound } from '../../components/ResourceNotFound';
+import { FRIENDS_ACTIVITY, MOCK_PLAYLISTS } from '../../constants/mockData';
 import {
   Radius,
   Spacing,
   type ThemeColors,
   type ThemeTypography,
-} from '../constants/theme';
-import { usePlayer } from '../context/PlayerContext';
-import { useTheme } from '../context/ThemeContext';
+} from '../../constants/theme';
+import { usePlayer } from '../../context/PlayerContext';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function FriendProfileScreen() {
   const router = useRouter();
@@ -24,14 +25,22 @@ export default function FriendProfileScreen() {
     [colors, typography]
   );
   const { playTrack } = usePlayer();
+  const [isFollowing, setIsFollowing] = useState(false);
 
-  const friend =
-    FRIENDS_ACTIVITY.find((f) => f.id === id) || FRIENDS_ACTIVITY[0];
+  const friend = FRIENDS_ACTIVITY.find((f) => f.id === id);
+
+  if (!friend) {
+    return (
+      <ResourceNotFound
+        title="Perfil não encontrado"
+        description="Não localizamos o amigo solicitado."
+      />
+    );
+  }
+
   const previewTracks = friend.playlists
     .flatMap((playlist) => playlist.tracks)
     .slice(0, 5);
-
-  const [isFollowing, setIsFollowing] = useState(false);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>

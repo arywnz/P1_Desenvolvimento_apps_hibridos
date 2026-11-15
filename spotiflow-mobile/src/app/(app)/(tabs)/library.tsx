@@ -4,14 +4,14 @@ import { SymbolView } from 'expo-symbols';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MOCK_PLAYLISTS, USER_PROFILE } from '../../constants/mockData';
+import { MOCK_PLAYLISTS, USER_PROFILE } from '../../../constants/mockData';
 import {
   Radius,
   Spacing,
   type ThemeColors,
   type ThemeTypography,
-} from '../../constants/theme';
-import { useTheme } from '../../context/ThemeContext';
+} from '../../../constants/theme';
+import { useTheme } from '../../../context/ThemeContext';
 
 const LIBRARY_FILTERS = ['Playlists', 'Baixado'];
 

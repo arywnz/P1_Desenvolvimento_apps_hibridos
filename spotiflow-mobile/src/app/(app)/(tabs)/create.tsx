@@ -9,8 +9,8 @@ import {
   Spacing,
   type ThemeColors,
   type ThemeTypography,
-} from '../../constants/theme';
-import { useTheme } from '../../context/ThemeContext';
+} from '../../../constants/theme';
+import { useTheme } from '../../../context/ThemeContext';
 
 interface CreateOption {
   id: string;
@@ -87,7 +87,7 @@ export default function CreateScreen() {
     setCreatedFeedback(`Criando "${option.title}"...`);
     setTimeout(() => {
       setCreatedFeedback(null);
-      router.push('/(tabs)/library');
+      router.push('/library');
     }, 900);
   };
 

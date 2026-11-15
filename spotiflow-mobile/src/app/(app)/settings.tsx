@@ -15,12 +15,14 @@ import {
   Spacing,
   type ThemeColors,
   type ThemeTypography,
-} from '../constants/theme';
-import { useTheme } from '../context/ThemeContext';
+} from '../../constants/theme';
+import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { user, signOut } = useAuth();
   const { colors, typography, isDark, setMode } = useTheme();
   const styles = useMemo(
     () => createStyles(colors, typography),
@@ -119,7 +121,7 @@ export default function SettingsScreen() {
               <View style={styles.rowTextGroup}>
                 <Text style={styles.rowTitle}>E-mail</Text>
                 <Text style={styles.rowSubtitle}>
-                  jao.estudante@univassouras.edu.br
+                  {user?.email ?? 'jao.estudante@univassouras.edu.br'}
                 </Text>
               </View>
             </View>
@@ -127,7 +129,7 @@ export default function SettingsScreen() {
               <View style={styles.rowTextGroup}>
                 <Text style={styles.rowTitle}>Plano Atual</Text>
                 <Text style={styles.rowSubtitle}>
-                  Premium Universitário (Ativo)
+                  {user?.plan ?? 'Premium Universitário'} (Ativo)
                 </Text>
               </View>
             </View>
@@ -241,6 +243,19 @@ export default function SettingsScreen() {
             </View>
           </View>
         </View>
+
+        {/* Sessão */}
+        <Pressable
+          style={styles.logoutButton}
+          onPress={() => {
+            signOut();
+            router.replace('/login');
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Sair da conta"
+        >
+          <Text style={styles.logoutButtonText}>Sair da conta</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
@@ -331,6 +346,20 @@ function createStyles(colors: ThemeColors, typography: ThemeTypography) {
       ...typography.bodySmall,
       color: colors.textSecondary,
       fontSize: 12,
+    },
+    logoutButton: {
+      height: 48,
+      borderRadius: Radius.pill,
+      borderWidth: 1,
+      borderColor: colors.danger,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: Spacing.xs,
+    },
+    logoutButtonText: {
+      ...typography.bodyMedium,
+      color: colors.danger,
+      fontWeight: '700',
     },
   });
 }
