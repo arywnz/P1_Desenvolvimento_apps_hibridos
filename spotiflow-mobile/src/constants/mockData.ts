@@ -1,34 +1,12 @@
 import type { ImageProps } from 'expo-image';
+import type { Playlist, Track } from '../types/music';
+
+export type { Playlist, Track } from '../types/music';
 
 /**
  * Dados simulados (mock) para a aplicação Spotiflow
  * Baseado fielmente nos elementos de tela do Spotify
  */
-
-export interface Track {
-  id: string;
-  title: string;
-  artist: string;
-  album: string;
-  duration: string;
-  durationSeconds: number;
-  coverUrl: string;
-  liked: boolean;
-}
-
-export interface Playlist {
-  id: string;
-  title: string;
-  subtitle: string;
-  author: string;
-  coverUrl: string;
-  coverSource?: ImageProps['source'];
-  isMixed?: boolean;
-  isPinned?: boolean;
-  isDownloaded?: boolean;
-  tracksCount: number;
-  tracks: Track[];
-}
 
 export interface Category {
   id: string;
