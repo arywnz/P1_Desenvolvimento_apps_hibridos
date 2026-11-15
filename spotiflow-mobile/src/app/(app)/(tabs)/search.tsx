@@ -1,3 +1,4 @@
+import { OfflineBanner } from '../../../components/OfflineBanner';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -34,6 +35,7 @@ import { usePlayer } from '../../../context/PlayerContext';
 import { useTheme } from '../../../context/ThemeContext';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { useFetch } from '../../../hooks/useFetch';
+import { useOnline } from '../../../hooks/useOnline';
 import { api } from '../../../services/api';
 import type { Track } from '../../../types/music';
 import { resolveUserAvatar } from '../../../utils/userAvatar';
@@ -42,6 +44,8 @@ const PAGE_SIZE = 20;
 
 export default function SearchScreen() {
   const router = useRouter();
+  const online = useOnline();
+  const previousOnline = useRef(online);
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { colors, typography } = useTheme();
@@ -135,6 +139,13 @@ export default function SearchScreen() {
     void Promise.resolve().then(() => runInitialSearch(debouncedQuery));
   }, [debouncedQuery, runInitialSearch]);
 
+  useEffect(() => {
+    if (previousOnline.current === false && online === true) {
+      void runInitialSearch(debouncedQuery);
+    }
+    previousOnline.current = online;
+  }, [online, debouncedQuery, runInitialSearch]);
+
   const loadMore = async () => {
     if (!debouncedQuery || !hasMore || loadingMoreRef.current || loading) {
       return;
@@ -173,6 +184,7 @@ export default function SearchScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <OfflineBanner />
       <View style={styles.topSection}>
         {/* Cabeçalho */}
         <View style={styles.header}>

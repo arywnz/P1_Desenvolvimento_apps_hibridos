@@ -1,3 +1,4 @@
+import { OfflineBanner } from '../../../components/OfflineBanner';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -93,6 +94,7 @@ export default function LibraryScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <OfflineBanner />
       <FlatList
         key={`${isGridView ? 'grid' : 'list'}-${gridColumns}`}
         data={displayedPlaylists}

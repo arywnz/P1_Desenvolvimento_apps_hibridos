@@ -1,3 +1,4 @@
+import { OfflineBanner } from '../../../components/OfflineBanner';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -110,6 +111,7 @@ export default function ArtistDetailScreen() {
   if (isNumericId && (loading || error || !remoteArtist)) {
     return (
       <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <OfflineBanner />
         <View style={styles.topBar}>
           <Pressable
             style={styles.backButton}

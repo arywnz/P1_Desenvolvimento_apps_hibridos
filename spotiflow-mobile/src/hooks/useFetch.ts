@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { comCache } from '../services/cache';
+import { useOnline } from './useOnline';
 
 interface UseFetchOptions {
   enabled?: boolean;
@@ -22,6 +23,8 @@ export function useFetch<T>(
   options?: UseFetchOptions
 ): UseFetchResult<T> {
   const enabled = options?.enabled ?? true;
+  const online = useOnline();
+  const previousOnline = useRef(online);
   const cacheKey = options?.cacheKey;
   const ttlMs = options?.ttlMs ?? 300_000;
   const [data, setData] = useState<T | null>(null);
@@ -84,5 +87,9 @@ export function useFetch<T>(
   }, [execute]);
 
   const reload = useCallback(() => execute(true), [execute]);
+  useEffect(() => {
+    if (previousOnline.current === false && online === true) void reload();
+    previousOnline.current = online;
+  }, [online, reload]);
   return { data, loading, error, reload };
 }

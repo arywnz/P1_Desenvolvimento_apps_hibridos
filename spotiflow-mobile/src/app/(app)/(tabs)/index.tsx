@@ -1,3 +1,4 @@
+import { OfflineBanner } from '../../../components/OfflineBanner';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -112,6 +113,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <OfflineBanner />
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.content}

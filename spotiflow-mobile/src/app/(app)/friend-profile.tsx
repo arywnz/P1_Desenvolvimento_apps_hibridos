@@ -1,3 +1,4 @@
+import { OfflineBanner } from '../../components/OfflineBanner';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -88,6 +89,7 @@ export default function FriendProfileScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <OfflineBanner />
       {/* Top Bar */}
       <View style={styles.header}>
         <Pressable
