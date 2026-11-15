@@ -2,12 +2,15 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
+  useRef,
   useMemo,
   useState,
   type ReactNode,
 } from 'react';
 import { USER_PROFILE } from '../constants/mockData';
 import { api } from '../services/api';
+import { restaurarSessao, salvarSessao } from '../services/sessao';
 
 export interface AuthUser {
   id: string;
@@ -56,7 +59,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Aula 10: hidratar usuário via AsyncStorage + token via SecureStore ao iniciar e liberar SplashScreen com isReady = true.
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [isReady] = useState(true);
+  const [isReady, setIsReady] = useState(false);
+  const pendingWrite = useRef(Promise.resolve());
+
+  useEffect(() => {
+    let active = true;
+    void restaurarSessao().then(session => {
+      if (!active) return;
+      setUser(session?.user ?? null);
+      setToken(session?.token ?? null);
+    }).catch(() => {
+      console.warn('Nao foi possivel restaurar a sessao.');
+    }).finally(() => { if (active) setIsReady(true); });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!isReady) return;
+    pendingWrite.current = pendingWrite.current
+      .then(() => salvarSessao(user, token))
+      .catch(() => { console.warn('Nao foi possivel persistir a sessao.'); });
+  }, [user, token, isReady]);
 
   const signIn = useCallback(
     ({ id, email, name, avatarUrl, token: sessionToken }: SignInPayload) => {

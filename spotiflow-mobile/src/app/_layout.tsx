@@ -1,12 +1,21 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { AuthProvider } from '../context/AuthContext';
+import { AuthProvider, useAuth } from '../context/AuthContext';
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect } from 'react';
 import { LibraryProvider } from '../context/LibraryContext';
 import { PlayerProvider } from '../context/PlayerContext';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
 
+void SplashScreen.preventAutoHideAsync().catch(() => {});
+
 function RootNavigator() {
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, isReady: themeReady } = useTheme();
+  const { isReady } = useAuth();
+  useEffect(() => {
+    if (isReady && themeReady) void SplashScreen.hideAsync().catch(() => {});
+  }, [isReady, themeReady]);
+  if (!isReady || !themeReady) return null;
 
   return (
     <>
