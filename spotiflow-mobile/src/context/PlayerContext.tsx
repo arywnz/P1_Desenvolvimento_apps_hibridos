@@ -14,6 +14,7 @@ import React, {
 } from 'react';
 import { INITIAL_TRACK_QUERY } from '../constants/mockData';
 import { api } from '../services/api';
+import { registrarFaixa } from '../db/banco';
 import type { Track } from '../types/music';
 import { useAuth } from './AuthContext';
 
@@ -134,6 +135,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       setCurrentTrack(track);
 
       if (track.previewUrl) {
+        void registrarFaixa(userRef.current.id, track).catch(() => {
+          console.warn('Nao foi possivel salvar o historico.');
+        });
         player.replace(track.previewUrl);
         player.play();
       } else {

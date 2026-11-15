@@ -1,7 +1,9 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { listarHistorico } from '../../db/banco';
+import { useFetch } from '../../hooks/useFetch';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MiniPlayer } from '../../components/MiniPlayer';
 import { USER_PROFILE } from '../../constants/mockData';
@@ -27,6 +29,9 @@ export default function AccountScreen() {
     [colors, typography]
   );
   const { playTrack } = usePlayer();
+  const [filter, setFilter] = useState('');
+  const fetchHistory = useCallback(() => listarHistorico(user?.id ?? '', filter), [user?.id, filter]);
+  const { data: history, error: historyError } = useFetch(fetchHistory, { enabled: type === 'recents' && Boolean(user) });
 
   const getScreenDetails = () => {
     switch (type) {
@@ -130,6 +135,9 @@ export default function AccountScreen() {
   };
 
   const details = getScreenDetails();
+  if (type === 'recents') {
+    details.infoItems = (history ?? []).map(track => ({ label: track.title, val: track.artist }));
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -175,6 +183,20 @@ export default function AccountScreen() {
         </View>
 
         {/* Lista de Informações */}
+        {type === 'recents' && (
+          <View>
+            <TextInput
+              value={filter}
+              onChangeText={setFilter}
+              placeholder="Filtrar histórico"
+              placeholderTextColor={colors.textMuted}
+              accessibilityLabel="Filtrar histórico"
+              style={{ color: colors.textPrimary, padding: 12 }}
+            />
+            {historyError && <Text style={{ color: colors.danger }}>{historyError}</Text>}
+            {history?.length === 0 && <Text style={{ color: colors.textSecondary }}>Nenhuma faixa encontrada.</Text>}
+          </View>
+        )}
         <View style={styles.section}>
           <Text style={styles.sectionHeader}>{details.infoTitle}</Text>
           <View style={styles.card}>

@@ -34,15 +34,24 @@ function RootNavigator() {
   );
 }
 
+function ReadyProviders() {
+  const { isReady } = useAuth();
+  const { isReady: themeReady } = useTheme();
+  if (!isReady || !themeReady) return null;
+  return (
+    <LibraryProvider>
+      <PlayerProvider>
+        <RootNavigator />
+      </PlayerProvider>
+    </LibraryProvider>
+  );
+}
+
 export default function RootLayout() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <LibraryProvider>
-          <PlayerProvider>
-            <RootNavigator />
-          </PlayerProvider>
-        </LibraryProvider>
+        <ReadyProviders />
       </AuthProvider>
     </ThemeProvider>
   );

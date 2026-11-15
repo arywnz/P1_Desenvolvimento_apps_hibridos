@@ -42,14 +42,18 @@ export default function CreatePlaylistScreen() {
   const [isPinned, setIsPinned] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleCreate = () => {
+  const [saving, setSaving] = useState(false);
+  const handleCreate = async () => {
+    if (saving) return;
     const trimmed = title.trim();
     if (trimmed.length < 2) {
       setErrorMessage('Digite um nome com pelo menos 2 caracteres.');
       return;
     }
 
-    const created = createPlaylist({
+    setSaving(true);
+    try {
+    const created = await createPlaylist({
       title: trimmed,
       subtitle: subtitle.trim() || `${mode || 'Playlist'} • ${selectedTag}`,
       authorName: user?.name ?? 'Você',
@@ -60,6 +64,9 @@ export default function CreatePlaylistScreen() {
       pathname: '/playlist/[id]',
       params: { id: created.id },
     });
+    } catch {
+      setErrorMessage('Nao foi possivel salvar a playlist. Tente novamente.');
+    } finally { setSaving(false); }
   };
 
   return (
@@ -184,6 +191,8 @@ export default function CreatePlaylistScreen() {
           <Pressable
             style={styles.createButton}
             onPress={handleCreate}
+            disabled={saving}
+            accessibilityState={{ busy: saving, disabled: saving }}
             accessibilityRole="button"
             accessibilityLabel="Criar playlist"
           >

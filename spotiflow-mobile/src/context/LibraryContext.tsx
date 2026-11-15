@@ -2,6 +2,8 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
+  useRef,
   useMemo,
   useState,
   type ReactNode,
@@ -13,6 +15,8 @@ import {
   FRIENDS_ACTIVITY,
   type Playlist,
 } from '../constants/mockData';
+import { useAuth } from './AuthContext';
+import { listarPlaylists, salvarPlaylist } from '../db/banco';
 
 interface CreatePlaylistInput {
   title: string;
@@ -27,7 +31,7 @@ interface LibraryContextValue {
   savedIds: string[];
   downloadedIds: string[];
   followedArtists: string[];
-  createPlaylist: (input: CreatePlaylistInput) => Playlist;
+  createPlaylist: (input: CreatePlaylistInput) => Promise<Playlist>;
   toggleSavePlaylist: (playlistId: string) => void;
   toggleDownloadPlaylist: (playlistId: string) => void;
   toggleFollowArtist: (artistKey: string) => void;
@@ -40,6 +44,10 @@ const LibraryContext = createContext<LibraryContextValue>(
 const FRIEND_PLAYLISTS = FRIENDS_ACTIVITY.flatMap((f) => f.playlists);
 
 export function LibraryProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  const userId = user?.id;
+  const activeUser = useRef(userId);
+  useEffect(() => { activeUser.current = userId; }, [userId]);
   // Aula 10: playlists criadas e salvamentos podem ser persistidos em SQLite/AsyncStorage.
   const [playlists, setPlaylists] = useState<Playlist[]>(CURATED_PLAYLISTS);
   const [savedIds, setSavedIds] = useState<string[]>([
@@ -52,13 +60,33 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
   );
   const [followedArtists, setFollowedArtists] = useState<string[]>([]);
 
+  useEffect(() => {
+    let active = true;
+    void Promise.resolve().then(async () => {
+      if (!active) return;
+      setPlaylists(CURATED_PLAYLISTS);
+      setSavedIds(['liked-songs', 'echos-of-us', 'my-peace']);
+      return userId ? listarPlaylists(userId) : [];
+    }).then(saved => {
+      if (!active) return;
+      setPlaylists(previous => [
+        ...previous.filter(p => p.id.startsWith('custom-')),
+        ...(saved ?? []).filter(p => !previous.some(existing => existing.id === p.id)),
+        ...CURATED_PLAYLISTS,
+      ]);
+      setSavedIds(previous => [...new Set([...previous, ...(saved ?? []).map(p => p.id)])]);
+    }).catch(() => { console.warn('Nao foi possivel carregar as playlists locais.'); });
+    return () => { active = false; };
+  }, [userId]);
+
   const allPlaylists = useMemo(
     () => [...playlists, ...FRIEND_PLAYLISTS],
     [playlists]
   );
 
   const createPlaylist = useCallback(
-    ({ title, subtitle, authorName, isPinned = false }: CreatePlaylistInput) => {
+    async ({ title, subtitle, authorName, isPinned = false }: CreatePlaylistInput) => {
+      if (!userId) throw new Error('Entre na conta para criar uma playlist.');
       const cleanTitle = title.trim();
       const cleanSubtitle = subtitle?.trim() || 'Playlist criada por você';
       const newPlaylist: Playlist = {
@@ -74,11 +102,13 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
         tracks: [],
       };
 
-      setPlaylists((prev) => [newPlaylist, ...prev]);
+      await salvarPlaylist(userId, newPlaylist);
+      if (activeUser.current !== userId) throw new Error('A conta foi alterada.');
+      setPlaylists((prev) => [newPlaylist, ...prev.filter(p => p.id !== newPlaylist.id)]);
       setSavedIds((prev) => [newPlaylist.id, ...prev]);
       return newPlaylist;
     },
-    []
+    [userId]
   );
 
   const toggleSavePlaylist = useCallback((playlistId: string) => {
