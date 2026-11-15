@@ -1,22 +1,27 @@
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useState } from 'react';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MOCK_PLAYLISTS, USER_PROFILE } from '../../constants/mockData';
-import { Colors, Spacing, Typography } from '../../constants/theme';
+import {
+  Radius,
+  Spacing,
+  type ThemeColors,
+  type ThemeTypography,
+} from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 
 const LIBRARY_FILTERS = ['Playlists', 'Baixado'];
 
 export default function LibraryScreen() {
   const router = useRouter();
+  const { colors, typography } = useTheme();
+  const styles = useMemo(
+    () => createStyles(colors, typography),
+    [colors, typography]
+  );
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
 
   const displayedPlaylists = MOCK_PLAYLISTS.filter((playlist) => {
@@ -41,7 +46,9 @@ export default function LibraryScreen() {
             accessibilityLabel="Abrir perfil"
           >
             <Image
-              source={USER_PROFILE.avatarSource ?? { uri: USER_PROFILE.avatarUrl }}
+              source={
+                USER_PROFILE.avatarSource ?? { uri: USER_PROFILE.avatarUrl }
+              }
               style={styles.avatar}
               contentFit="cover"
             />
@@ -63,7 +70,7 @@ export default function LibraryScreen() {
                   web: 'search',
                 }}
                 size={24}
-                tintColor={Colors.textPrimary}
+                tintColor={colors.textPrimary}
                 type="hierarchical"
               />
             </Pressable>
@@ -81,7 +88,7 @@ export default function LibraryScreen() {
                   web: 'add',
                 }}
                 size={26}
-                tintColor={Colors.textPrimary}
+                tintColor={colors.textPrimary}
                 type="hierarchical"
               />
             </Pressable>
@@ -128,7 +135,7 @@ export default function LibraryScreen() {
                 web: 'swap_vert',
               }}
               size={18}
-              tintColor={Colors.textPrimary}
+              tintColor={colors.textPrimary}
               type="hierarchical"
             />
             <Text style={styles.sortText}>Recentes</Text>
@@ -142,7 +149,7 @@ export default function LibraryScreen() {
                 web: 'grid_view',
               }}
               size={20}
-              tintColor={Colors.textPrimary}
+              tintColor={colors.textPrimary}
               type="hierarchical"
             />
           </Pressable>
@@ -189,7 +196,7 @@ export default function LibraryScreen() {
                         web: 'push_pin',
                       }}
                       size={13}
-                      tintColor={Colors.primary}
+                      tintColor={colors.primary}
                       type="hierarchical"
                     />
                   )}
@@ -201,7 +208,7 @@ export default function LibraryScreen() {
                         web: 'tune',
                       }}
                       size={13}
-                      tintColor={Colors.textSecondary}
+                      tintColor={colors.textSecondary}
                       type="hierarchical"
                     />
                   )}
@@ -213,7 +220,7 @@ export default function LibraryScreen() {
                         web: 'download_for_offline',
                       }}
                       size={13}
-                      tintColor={Colors.primary}
+                      tintColor={colors.primary}
                       type="hierarchical"
                     />
                   )}
@@ -230,116 +237,118 @@ export default function LibraryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  container: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.md,
-    paddingBottom: 110,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.lg,
-  },
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.backgroundCard,
-  },
-  headerTitle: {
-    ...Typography.titleLarge,
-    fontSize: 24,
-    flex: 1,
-    marginLeft: Spacing.md,
-  },
-  headerIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  filtersContainer: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    marginBottom: Spacing.lg,
-  },
-  filterPill: {
-    minHeight: 34,
-    borderRadius: 17,
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.md,
-    backgroundColor: Colors.backgroundCard,
-  },
-  filterPillActive: {
-    backgroundColor: Colors.primary,
-  },
-  filterText: {
-    ...Typography.bodyMedium,
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  filterTextActive: {
-    color: Colors.background,
-  },
-  sortBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.md,
-  },
-  sortButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  sortText: {
-    ...Typography.bodyMedium,
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  playlistList: {
-    gap: Spacing.sm,
-  },
-  playlistItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-  },
-  playlistCover: {
-    width: 64,
-    height: 64,
-    borderRadius: 4,
-    backgroundColor: Colors.surfaceCard,
-  },
-  playlistInfo: {
-    flex: 1,
-    marginLeft: Spacing.md,
-    justifyContent: 'center',
-  },
-  playlistTitle: {
-    ...Typography.bodyMedium,
-    fontWeight: '700',
-    fontSize: 15,
-    marginBottom: 4,
-  },
-  playlistTitleGreen: {
-    color: Colors.primary,
-  },
-  playlistMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  playlistSubtitle: {
-    ...Typography.bodySmall,
-    color: Colors.textSecondary,
-    fontSize: 13,
-  },
-});
+function createStyles(colors: ThemeColors, typography: ThemeTypography) {
+  return StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    container: {
+      flex: 1,
+    },
+    content: {
+      paddingHorizontal: Spacing.md,
+      paddingTop: Spacing.md,
+      paddingBottom: 110,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: Spacing.lg,
+    },
+    avatar: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: colors.backgroundCard,
+    },
+    headerTitle: {
+      ...typography.titleLarge,
+      fontSize: 24,
+      flex: 1,
+      marginLeft: Spacing.md,
+    },
+    headerIcons: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.md,
+    },
+    filtersContainer: {
+      flexDirection: 'row',
+      gap: Spacing.sm,
+      marginBottom: Spacing.lg,
+    },
+    filterPill: {
+      minHeight: 34,
+      borderRadius: Radius.pill,
+      justifyContent: 'center',
+      paddingHorizontal: Spacing.md,
+      backgroundColor: colors.backgroundCard,
+    },
+    filterPillActive: {
+      backgroundColor: colors.primary,
+    },
+    filterText: {
+      ...typography.bodyMedium,
+      fontWeight: '700',
+      fontSize: 13,
+    },
+    filterTextActive: {
+      color: colors.onPrimary,
+    },
+    sortBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: Spacing.md,
+    },
+    sortButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.xs,
+    },
+    sortText: {
+      ...typography.bodyMedium,
+      fontWeight: '700',
+      fontSize: 13,
+    },
+    playlistList: {
+      gap: Spacing.sm,
+    },
+    playlistItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 6,
+    },
+    playlistCover: {
+      width: 64,
+      height: 64,
+      borderRadius: Radius.xs,
+      backgroundColor: colors.surfaceCard,
+    },
+    playlistInfo: {
+      flex: 1,
+      marginLeft: Spacing.md,
+      justifyContent: 'center',
+    },
+    playlistTitle: {
+      ...typography.bodyMedium,
+      fontWeight: '700',
+      fontSize: 15,
+      marginBottom: 4,
+    },
+    playlistTitleGreen: {
+      color: colors.primary,
+    },
+    playlistMetaRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    playlistSubtitle: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      fontSize: 13,
+    },
+  });
+}

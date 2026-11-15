@@ -1,21 +1,27 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { useMemo } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MOCK_PLAYLISTS, USER_PROFILE } from '../constants/mockData';
-import { Colors, Spacing, Typography } from '../constants/theme';
+import {
+  Radius,
+  Spacing,
+  type ThemeColors,
+  type ThemeTypography,
+} from '../constants/theme';
 import { usePlayer } from '../context/PlayerContext';
+import { useTheme } from '../context/ThemeContext';
 
 export default function AccountScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { type } = useLocalSearchParams<{ type: string }>();
+  const { colors, typography } = useTheme();
+  const styles = useMemo(
+    () => createStyles(colors, typography),
+    [colors, typography]
+  );
   const { playTrack } = usePlayer();
 
   const getScreenDetails = () => {
@@ -31,7 +37,10 @@ export default function AccountScreen() {
             { label: 'Valor', val: 'R$ 11,90 / mês' },
             { label: 'Próxima cobrança', val: '12 de Outubro de 2026' },
             { label: 'Forma de pagamento', val: 'Cartão de crédito •••• 4128' },
-            { label: 'Benefícios', val: 'Música sem anúncios, download offline, áudio em altíssima qualidade' },
+            {
+              label: 'Benefícios',
+              val: 'Música sem anúncios, download offline, áudio em altíssima qualidade',
+            },
           ],
         };
       case 'stats':
@@ -41,9 +50,15 @@ export default function AccountScreen() {
           badge: '2026',
           infoTitle: 'Top Artistas & Gêneros',
           infoItems: [
-            { label: 'Top Artista', val: 'Cazuza (Mais de 320 minutos ouvidos)' },
+            {
+              label: 'Top Artista',
+              val: 'Cazuza (Mais de 320 minutos ouvidos)',
+            },
             { label: 'Top Gênero', val: 'MPB / Rock Nacional' },
-            { label: 'Total de Faixas', val: '1.240 músicas reproduzidas neste mês' },
+            {
+              label: 'Total de Faixas',
+              val: '1.240 músicas reproduzidas neste mês',
+            },
             { label: 'Minutos totais', val: '4.850 minutos' },
             { label: 'Vibe predominante', val: 'Nostálgica & Poética' },
           ],
@@ -70,9 +85,15 @@ export default function AccountScreen() {
           infoTitle: 'Lançamentos Recentes',
           infoItems: [
             { label: 'Hoje', val: 'Novo single de Jão disponível' },
-            { label: 'Há 2 dias', val: 'Novo episódio do podcast Café da Manhã' },
+            {
+              label: 'Há 2 dias',
+              val: 'Novo episódio do podcast Café da Manhã',
+            },
             { label: 'Esta semana', val: 'Remaster de álbum clássico lançado' },
-            { label: 'Recomendação', val: 'Turnê nacional anunciada na sua cidade' },
+            {
+              label: 'Recomendação',
+              val: 'Turnê nacional anunciada na sua cidade',
+            },
           ],
         };
       case 'add-account':
@@ -83,10 +104,22 @@ export default function AccountScreen() {
           badge: 'Multicontas',
           infoTitle: 'Opções de Conta',
           infoItems: [
-            { label: 'Conta Principal', val: `${USER_PROFILE.name} (${USER_PROFILE.plan})` },
-            { label: 'Perfil Kids', val: 'Criar ambiente seguro para crianças' },
-            { label: 'Entrar com outra conta', val: 'Conecte outro login do Spotify' },
-            { label: 'Sessão Convidado', val: 'Tocar sem alterar seu algoritmo' },
+            {
+              label: 'Conta Principal',
+              val: `${USER_PROFILE.name} (${USER_PROFILE.plan})`,
+            },
+            {
+              label: 'Perfil Kids',
+              val: 'Criar ambiente seguro para crianças',
+            },
+            {
+              label: 'Entrar com outra conta',
+              val: 'Conecte outro login do Spotify',
+            },
+            {
+              label: 'Sessão Convidado',
+              val: 'Tocar sem alterar seu algoritmo',
+            },
           ],
         };
     }
@@ -111,7 +144,7 @@ export default function AccountScreen() {
               web: 'arrow_back',
             }}
             size={24}
-            tintColor={Colors.textPrimary}
+            tintColor={colors.textPrimary}
             type="hierarchical"
           />
         </Pressable>
@@ -122,7 +155,10 @@ export default function AccountScreen() {
 
       <ScrollView
         style={styles.container}
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 30 }]}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: insets.bottom + 30 },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         {/* Banner do Cabeçalho */}
@@ -134,12 +170,18 @@ export default function AccountScreen() {
           <Text style={styles.bannerSubtitle}>{details.subtitle}</Text>
         </View>
 
-        {/* Lista de Informações / Configurações */}
+        {/* Lista de Informações */}
         <View style={styles.section}>
           <Text style={styles.sectionHeader}>{details.infoTitle}</Text>
           <View style={styles.card}>
             {details.infoItems.map((item, index) => (
-              <View key={index} style={styles.row}>
+              <View
+                key={index}
+                style={[
+                  styles.row,
+                  index === details.infoItems.length - 1 && styles.lastRow,
+                ]}
+              >
                 <Text style={styles.rowLabel}>{item.label}</Text>
                 <Text style={styles.rowValue}>{item.val}</Text>
               </View>
@@ -164,7 +206,7 @@ export default function AccountScreen() {
               web: 'play_arrow',
             }}
             size={20}
-            tintColor={Colors.background}
+            tintColor={colors.onPrimary}
             type="hierarchical"
           />
           <Text style={styles.actionButtonText}>Ouvir recomendação do dia</Text>
@@ -174,118 +216,123 @@ export default function AccountScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  header: {
-    height: 52,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    ...Typography.titleMedium,
-    fontSize: 18,
-    marginLeft: Spacing.sm,
-  },
-  container: {
-    flex: 1,
-  },
-  content: {
-    padding: Spacing.md,
-    gap: Spacing.lg,
-  },
-  bannerCard: {
-    backgroundColor: Colors.surfaceCard,
-    borderRadius: 12,
-    padding: Spacing.lg,
-    borderLeftWidth: 4,
-    borderLeftColor: Colors.primary,
-  },
-  badge: {
-    alignSelf: 'flex-start',
-    backgroundColor: Colors.primary,
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    marginBottom: Spacing.sm,
-  },
-  badgeText: {
-    color: '#121212',
-    fontWeight: '800',
-    fontSize: 11,
-    textTransform: 'uppercase',
-  },
-  bannerTitle: {
-    ...Typography.titleLarge,
-    fontSize: 22,
-    fontWeight: '800',
-    marginBottom: 4,
-  },
-  bannerSubtitle: {
-    ...Typography.bodySmall,
-    color: Colors.textSecondary,
-    fontSize: 13,
-  },
-  section: {
-    gap: Spacing.xs,
-  },
-  sectionHeader: {
-    ...Typography.titleMedium,
-    fontSize: 14,
-    color: Colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: 4,
-  },
-  card: {
-    backgroundColor: Colors.surfaceCard,
-    borderRadius: 8,
-    paddingHorizontal: Spacing.md,
-  },
-  row: {
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  rowLabel: {
-    ...Typography.caption,
-    color: Colors.primary,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    fontSize: 11,
-    marginBottom: 2,
-  },
-  rowValue: {
-    ...Typography.bodyMedium,
-    color: Colors.textPrimary,
-    fontSize: 14,
-    lineHeight: 18,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-    backgroundColor: Colors.primary,
-    height: 48,
-    borderRadius: 24,
-    marginTop: Spacing.sm,
-  },
-  actionButtonText: {
-    ...Typography.bodyMedium,
-    color: Colors.background,
-    fontWeight: '800',
-    fontSize: 14,
-  },
-});
+function createStyles(colors: ThemeColors, typography: ThemeTypography) {
+  return StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      height: 52,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: Spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    backButton: {
+      width: 36,
+      height: 36,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    headerTitle: {
+      ...typography.titleMedium,
+      fontSize: 18,
+      marginLeft: Spacing.sm,
+    },
+    container: {
+      flex: 1,
+    },
+    content: {
+      padding: Spacing.md,
+      gap: Spacing.lg,
+    },
+    bannerCard: {
+      backgroundColor: colors.surfaceCard,
+      borderRadius: Radius.lg,
+      padding: Spacing.lg,
+      borderLeftWidth: 4,
+      borderLeftColor: colors.primary,
+    },
+    badge: {
+      alignSelf: 'flex-start',
+      backgroundColor: colors.primary,
+      borderRadius: Radius.xs,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      marginBottom: Spacing.sm,
+    },
+    badgeText: {
+      color: colors.onPrimary,
+      fontWeight: '800',
+      fontSize: 11,
+      textTransform: 'uppercase',
+    },
+    bannerTitle: {
+      ...typography.titleLarge,
+      fontSize: 22,
+      fontWeight: '800',
+      marginBottom: 4,
+    },
+    bannerSubtitle: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      fontSize: 13,
+    },
+    section: {
+      gap: Spacing.xs,
+    },
+    sectionHeader: {
+      ...typography.titleMedium,
+      fontSize: 14,
+      color: colors.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.8,
+      marginBottom: 4,
+    },
+    card: {
+      backgroundColor: colors.surfaceCard,
+      borderRadius: Radius.md,
+      paddingHorizontal: Spacing.md,
+    },
+    row: {
+      paddingVertical: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.dividerSubtle,
+    },
+    lastRow: {
+      borderBottomWidth: 0,
+    },
+    rowLabel: {
+      ...typography.caption,
+      color: colors.primary,
+      fontWeight: '700',
+      textTransform: 'uppercase',
+      fontSize: 11,
+      marginBottom: 2,
+    },
+    rowValue: {
+      ...typography.bodyMedium,
+      color: colors.textPrimary,
+      fontSize: 14,
+      lineHeight: 18,
+    },
+    actionButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: Spacing.sm,
+      backgroundColor: colors.primary,
+      height: 48,
+      borderRadius: Radius.pill,
+      marginTop: Spacing.sm,
+    },
+    actionButtonText: {
+      ...typography.bodyMedium,
+      color: colors.onPrimary,
+      fontWeight: '800',
+      fontSize: 14,
+    },
+  });
+}

@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
-import { useState } from 'react';
+import { SymbolView } from 'expo-symbols';
+import { useMemo, useState } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -10,17 +10,30 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors, Spacing, Typography } from '../constants/theme';
+import {
+  Radius,
+  Spacing,
+  type ThemeColors,
+  type ThemeTypography,
+} from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 
 export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { colors, typography, isDark, setMode } = useTheme();
+  const styles = useMemo(
+    () => createStyles(colors, typography),
+    [colors, typography]
+  );
 
   const [dataSaver, setDataSaver] = useState(false);
   const [offlineMode, setOfflineMode] = useState(false);
   const [crossfade, setCrossfade] = useState(true);
   const [normalizeVolume, setNormalizeVolume] = useState(true);
   const [explicitContent, setExplicitContent] = useState(true);
+
+  const switchTrack = { false: colors.switchTrackOff, true: colors.primary };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -39,7 +52,7 @@ export default function SettingsScreen() {
               web: 'arrow_back',
             }}
             size={24}
-            tintColor={Colors.textPrimary}
+            tintColor={colors.textPrimary}
             type="hierarchical"
           />
         </Pressable>
@@ -48,9 +61,33 @@ export default function SettingsScreen() {
 
       <ScrollView
         style={styles.container}
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 30 }]}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: insets.bottom + 30 },
+        ]}
         showsVerticalScrollIndicator={false}
       >
+        {/* Seção Aparência (Tema Claro/Escuro) */}
+        <View style={styles.section}>
+          <Text style={styles.sectionHeader}>Aparência</Text>
+          <View style={styles.card}>
+            <View style={[styles.toggleRow, styles.lastRow]}>
+              <View style={styles.rowTextGroup}>
+                <Text style={styles.rowTitle}>Modo escuro</Text>
+                <Text style={styles.rowSubtitle}>
+                  Alterna entre a paleta escura e a clara em todo o app
+                </Text>
+              </View>
+              <Switch
+                value={isDark}
+                onValueChange={(value) => setMode(value ? 'dark' : 'light')}
+                trackColor={switchTrack}
+                thumbColor={colors.switchThumb}
+              />
+            </View>
+          </View>
+        </View>
+
         {/* Seção Conta */}
         <View style={styles.section}>
           <Text style={styles.sectionHeader}>Conta</Text>
@@ -63,7 +100,9 @@ export default function SettingsScreen() {
             >
               <View style={styles.rowTextGroup}>
                 <Text style={styles.rowTitle}>Perfil do usuario</Text>
-                <Text style={styles.rowSubtitle}>Ver amigos, mensagens e atividade recente</Text>
+                <Text style={styles.rowSubtitle}>
+                  Ver amigos, mensagens e atividade recente
+                </Text>
               </View>
               <SymbolView
                 name={{
@@ -72,20 +111,24 @@ export default function SettingsScreen() {
                   web: 'chevron_right',
                 }}
                 size={18}
-                tintColor={Colors.textSecondary}
+                tintColor={colors.textSecondary}
                 type="hierarchical"
               />
             </Pressable>
             <View style={styles.row}>
               <View style={styles.rowTextGroup}>
                 <Text style={styles.rowTitle}>E-mail</Text>
-                <Text style={styles.rowSubtitle}>jao.estudante@univassouras.edu.br</Text>
+                <Text style={styles.rowSubtitle}>
+                  jao.estudante@univassouras.edu.br
+                </Text>
               </View>
             </View>
-            <View style={styles.row}>
+            <View style={[styles.row, styles.lastRow]}>
               <View style={styles.rowTextGroup}>
                 <Text style={styles.rowTitle}>Plano Atual</Text>
-                <Text style={styles.rowSubtitle}>Premium Universitário (Ativo)</Text>
+                <Text style={styles.rowSubtitle}>
+                  Premium Universitário (Ativo)
+                </Text>
               </View>
             </View>
           </View>
@@ -95,7 +138,7 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionHeader}>Economia de Dados</Text>
           <View style={styles.card}>
-            <View style={styles.toggleRow}>
+            <View style={[styles.toggleRow, styles.lastRow]}>
               <View style={styles.rowTextGroup}>
                 <Text style={styles.rowTitle}>Economizador de dados</Text>
                 <Text style={styles.rowSubtitle}>
@@ -105,8 +148,8 @@ export default function SettingsScreen() {
               <Switch
                 value={dataSaver}
                 onValueChange={setDataSaver}
-                trackColor={{ false: '#3E3E3E', true: Colors.primary }}
-                thumbColor="#FFFFFF"
+                trackColor={switchTrack}
+                thumbColor={colors.switchThumb}
               />
             </View>
           </View>
@@ -126,8 +169,8 @@ export default function SettingsScreen() {
               <Switch
                 value={offlineMode}
                 onValueChange={setOfflineMode}
-                trackColor={{ false: '#3E3E3E', true: Colors.primary }}
-                thumbColor="#FFFFFF"
+                trackColor={switchTrack}
+                thumbColor={colors.switchThumb}
               />
             </View>
 
@@ -141,12 +184,12 @@ export default function SettingsScreen() {
               <Switch
                 value={crossfade}
                 onValueChange={setCrossfade}
-                trackColor={{ false: '#3E3E3E', true: Colors.primary }}
-                thumbColor="#FFFFFF"
+                trackColor={switchTrack}
+                thumbColor={colors.switchThumb}
               />
             </View>
 
-            <View style={styles.toggleRow}>
+            <View style={[styles.toggleRow, styles.lastRow]}>
               <View style={styles.rowTextGroup}>
                 <Text style={styles.rowTitle}>Normalizar volume</Text>
                 <Text style={styles.rowSubtitle}>
@@ -156,8 +199,8 @@ export default function SettingsScreen() {
               <Switch
                 value={normalizeVolume}
                 onValueChange={setNormalizeVolume}
-                trackColor={{ false: '#3E3E3E', true: Colors.primary }}
-                thumbColor="#FFFFFF"
+                trackColor={switchTrack}
+                thumbColor={colors.switchThumb}
               />
             </View>
           </View>
@@ -167,7 +210,7 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionHeader}>Privacidade e Conteúdo</Text>
           <View style={styles.card}>
-            <View style={styles.toggleRow}>
+            <View style={[styles.toggleRow, styles.lastRow]}>
               <View style={styles.rowTextGroup}>
                 <Text style={styles.rowTitle}>Permitir conteúdo explícito</Text>
                 <Text style={styles.rowSubtitle}>
@@ -177,8 +220,8 @@ export default function SettingsScreen() {
               <Switch
                 value={explicitContent}
                 onValueChange={setExplicitContent}
-                trackColor={{ false: '#3E3E3E', true: Colors.primary }}
-                thumbColor="#FFFFFF"
+                trackColor={switchTrack}
+                thumbColor={colors.switchThumb}
               />
             </View>
           </View>
@@ -188,10 +231,12 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionHeader}>Sobre</Text>
           <View style={styles.card}>
-            <View style={styles.row}>
+            <View style={[styles.row, styles.lastRow]}>
               <View style={styles.rowTextGroup}>
                 <Text style={styles.rowTitle}>Spotiflow Mobile</Text>
-                <Text style={styles.rowSubtitle}>Versão 1.0.0 (Engenharia de Software - P1)</Text>
+                <Text style={styles.rowSubtitle}>
+                  Versão 1.0.0 (Engenharia de Software - P2)
+                </Text>
               </View>
             </View>
           </View>
@@ -201,86 +246,91 @@ export default function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  header: {
-    height: 52,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    ...Typography.titleLarge,
-    fontSize: 20,
-    marginLeft: Spacing.sm,
-  },
-  container: {
-    flex: 1,
-  },
-  content: {
-    padding: Spacing.md,
-    gap: Spacing.lg,
-  },
-  section: {
-    gap: Spacing.xs,
-  },
-  sectionHeader: {
-    ...Typography.titleMedium,
-    fontSize: 14,
-    color: Colors.primary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: 4,
-  },
-  card: {
-    backgroundColor: Colors.surfaceCard,
-    borderRadius: 8,
-    paddingHorizontal: Spacing.md,
-  },
-  row: {
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  rowAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  rowTextGroup: {
-    flex: 1,
-    paddingRight: Spacing.sm,
-  },
-  rowTitle: {
-    ...Typography.bodyMedium,
-    fontWeight: '700',
-    fontSize: 14,
-    marginBottom: 2,
-  },
-  rowSubtitle: {
-    ...Typography.bodySmall,
-    color: Colors.textSecondary,
-    fontSize: 12,
-  },
-});
+function createStyles(colors: ThemeColors, typography: ThemeTypography) {
+  return StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      height: 52,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: Spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    backButton: {
+      width: 36,
+      height: 36,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    headerTitle: {
+      ...typography.titleLarge,
+      fontSize: 20,
+      marginLeft: Spacing.sm,
+    },
+    container: {
+      flex: 1,
+    },
+    content: {
+      padding: Spacing.md,
+      gap: Spacing.lg,
+    },
+    section: {
+      gap: Spacing.xs,
+    },
+    sectionHeader: {
+      ...typography.titleMedium,
+      fontSize: 14,
+      color: colors.primary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.8,
+      marginBottom: 4,
+    },
+    card: {
+      backgroundColor: colors.surfaceCard,
+      borderRadius: Radius.md,
+      paddingHorizontal: Spacing.md,
+    },
+    row: {
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.dividerSubtle,
+    },
+    rowAction: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.dividerSubtle,
+    },
+    toggleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.dividerSubtle,
+    },
+    lastRow: {
+      borderBottomWidth: 0,
+    },
+    rowTextGroup: {
+      flex: 1,
+      paddingRight: Spacing.sm,
+    },
+    rowTitle: {
+      ...typography.bodyMedium,
+      fontWeight: '700',
+      fontSize: 14,
+      marginBottom: 2,
+    },
+    rowSubtitle: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      fontSize: 12,
+    },
+  });
+}

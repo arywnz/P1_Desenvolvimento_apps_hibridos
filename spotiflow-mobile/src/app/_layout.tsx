@@ -1,16 +1,18 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { PlayerProvider } from '../context/PlayerContext';
-import { Colors } from '../constants/theme';
+import { ThemeProvider, useTheme } from '../context/ThemeContext';
 
-export default function RootLayout() {
+function RootNavigator() {
+  const { colors, isDark } = useTheme();
+
   return (
-    <PlayerProvider>
-      <StatusBar style="light" />
+    <>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: Colors.background },
+          contentStyle: { backgroundColor: colors.background },
           animation: 'slide_from_right',
         }}
       >
@@ -75,6 +77,16 @@ export default function RootLayout() {
           }}
         />
       </Stack>
-    </PlayerProvider>
+    </>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <PlayerProvider>
+        <RootNavigator />
+      </PlayerProvider>
+    </ThemeProvider>
   );
 }

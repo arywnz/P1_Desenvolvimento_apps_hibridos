@@ -1,7 +1,8 @@
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { Tabs, useRouter } from 'expo-router';
 import { View, type ColorValue } from 'react-native';
-import { Colors, Typography } from '../../constants/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../../context/ThemeContext';
 import { MiniPlayer } from '../../components/MiniPlayer';
 
 type TabIconName = SymbolViewProps['name'];
@@ -27,29 +28,34 @@ function TabIcon({
 
 export default function TabsLayout() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { colors, typography } = useTheme();
+  const bottomPadding = Math.max(insets.bottom, 12);
+  const tabBarHeight = 60 + bottomPadding;
+
   return (
     <View style={{ flex: 1 }}>
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: Colors.textPrimary,
-          tabBarInactiveTintColor: Colors.textSecondary,
+          tabBarActiveTintColor: colors.textPrimary,
+          tabBarInactiveTintColor: colors.textSecondary,
           tabBarStyle: {
-            backgroundColor: Colors.tabBarBackground,
-            borderTopColor: Colors.border,
-            height: 72,
-            paddingBottom: 12,
+            backgroundColor: colors.tabBarBackground,
+            borderTopColor: colors.border,
+            height: tabBarHeight,
+            paddingBottom: bottomPadding,
             paddingTop: 8,
           },
           tabBarLabelStyle: {
-            ...Typography.caption,
+            ...typography.caption,
             fontWeight: '600',
           },
           tabBarItemStyle: {
-            minHeight: 56,
+            minHeight: 52,
           },
           sceneStyle: {
-            backgroundColor: Colors.background,
+            backgroundColor: colors.background,
           },
         }}
       >

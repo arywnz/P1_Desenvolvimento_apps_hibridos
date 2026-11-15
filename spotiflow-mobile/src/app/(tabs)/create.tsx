@@ -1,15 +1,16 @@
 import { useRouter } from 'expo-router';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
-import { useState } from 'react';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { useMemo, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Spacing, Typography } from '../../constants/theme';
+import {
+  Radius,
+  Shadows,
+  Spacing,
+  type ThemeColors,
+  type ThemeTypography,
+} from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 
 interface CreateOption {
   id: string;
@@ -75,6 +76,11 @@ const CREATE_OPTIONS: CreateOption[] = [
 
 export default function CreateScreen() {
   const router = useRouter();
+  const { colors, typography } = useTheme();
+  const styles = useMemo(
+    () => createStyles(colors, typography),
+    [colors, typography]
+  );
   const [createdFeedback, setCreatedFeedback] = useState<string | null>(null);
 
   const handleSelectOption = (option: CreateOption) => {
@@ -110,7 +116,7 @@ export default function CreateScreen() {
                 <SymbolView
                   name={option.icon}
                   size={22}
-                  tintColor={Colors.textPrimary}
+                  tintColor={colors.textPrimary}
                   type="hierarchical"
                 />
               </View>
@@ -138,7 +144,7 @@ export default function CreateScreen() {
             </View>
           )}
 
-          {/* Botão de Fechar 'X' branco redondo */}
+          {/* Botão de Fechar redondo */}
           <View style={styles.bottomBar}>
             <Pressable
               style={styles.closeButton}
@@ -153,7 +159,7 @@ export default function CreateScreen() {
                   web: 'close',
                 }}
                 size={22}
-                tintColor={Colors.background}
+                tintColor={colors.closeButtonIcon}
                 type="hierarchical"
               />
             </Pressable>
@@ -164,98 +170,96 @@ export default function CreateScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#121212', // fundo escuro unificado
-    justifyContent: 'flex-end',
-  },
-  backdrop: {
-    flex: 1, // ocupa o topo livre para toque
-  },
-  sheetContainer: {
-    backgroundColor: '#1E1E1E', // cinza escuro do painel do Spotify
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingTop: Spacing.md,
-    paddingHorizontal: Spacing.md,
-    paddingBottom: 24, // respiro antes da barra de navegação
-  },
-  sheetContent: {
-    gap: Spacing.sm,
-  },
-  optionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-  },
-  iconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#2A2A2A',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  optionInfo: {
-    flex: 1,
-    marginLeft: Spacing.md,
-    justifyContent: 'center',
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    marginBottom: 4,
-  },
-  optionTitle: {
-    ...Typography.titleMedium,
-    fontSize: 16,
-  },
-  betaBadge: {
-    backgroundColor: Colors.primary,
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-  },
-  betaText: {
-    color: Colors.background,
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  optionSubtitle: {
-    ...Typography.bodySmall,
-    color: Colors.textSecondary,
-    fontSize: 13,
-  },
-  feedbackBanner: {
-    backgroundColor: Colors.primary,
-    padding: Spacing.sm,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginVertical: Spacing.xs,
-  },
-  feedbackText: {
-    color: Colors.background,
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  bottomBar: {
-    alignItems: 'flex-end',
-    marginTop: Spacing.xs,
-    paddingRight: Spacing.xs,
-  },
-  closeButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-  },
-});
+function createStyles(colors: ThemeColors, typography: ThemeTypography) {
+  return StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+      justifyContent: 'flex-end',
+    },
+    backdrop: {
+      flex: 1,
+    },
+    sheetContainer: {
+      backgroundColor: colors.sheetBackground,
+      borderTopLeftRadius: Radius.xl,
+      borderTopRightRadius: Radius.xl,
+      paddingTop: Spacing.md,
+      paddingHorizontal: Spacing.md,
+      paddingBottom: Spacing.lg,
+    },
+    sheetContent: {
+      gap: Spacing.sm,
+    },
+    optionRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 10,
+    },
+    iconCircle: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: colors.sheetIconBg,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    optionInfo: {
+      flex: 1,
+      marginLeft: Spacing.md,
+      justifyContent: 'center',
+    },
+    titleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.xs,
+      marginBottom: 4,
+    },
+    optionTitle: {
+      ...typography.titleMedium,
+      fontSize: 16,
+    },
+    betaBadge: {
+      backgroundColor: colors.primary,
+      borderRadius: Radius.xs,
+      paddingHorizontal: 6,
+      paddingVertical: 1,
+    },
+    betaText: {
+      color: colors.onPrimary,
+      fontSize: 10,
+      fontWeight: '800',
+    },
+    optionSubtitle: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      fontSize: 13,
+    },
+    feedbackBanner: {
+      backgroundColor: colors.primary,
+      padding: Spacing.sm,
+      borderRadius: Radius.md,
+      alignItems: 'center',
+      marginVertical: Spacing.xs,
+    },
+    feedbackText: {
+      color: colors.onPrimary,
+      fontWeight: '700',
+      fontSize: 13,
+    },
+    bottomBar: {
+      alignItems: 'flex-end',
+      marginTop: Spacing.xs,
+      paddingRight: Spacing.xs,
+    },
+    closeButton: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: colors.closeButtonBg,
+      alignItems: 'center',
+      justifyContent: 'center',
+      ...Shadows.floating,
+    },
+  });
+}

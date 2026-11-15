@@ -1,20 +1,21 @@
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { useMemo } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   DIRECT_MESSAGES,
   FRIENDS_ACTIVITY,
   USER_PROFILE,
 } from '../constants/mockData';
-import { Colors, Spacing, Typography } from '../constants/theme';
+import {
+  Radius,
+  Spacing,
+  type ThemeColors,
+  type ThemeTypography,
+} from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 
 const FRIEND_PLAYLISTS = FRIENDS_ACTIVITY.flatMap((friend) =>
   friend.playlists.map((playlist) => ({
@@ -27,6 +28,11 @@ const FRIEND_PLAYLISTS = FRIENDS_ACTIVITY.flatMap((friend) =>
 export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { colors, typography } = useTheme();
+  const styles = useMemo(
+    () => createStyles(colors, typography),
+    [colors, typography]
+  );
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -45,7 +51,7 @@ export default function ProfileScreen() {
               web: 'arrow_back',
             }}
             size={24}
-            tintColor={Colors.textPrimary}
+            tintColor={colors.textPrimary}
             type="hierarchical"
           />
         </Pressable>
@@ -53,13 +59,18 @@ export default function ProfileScreen() {
 
       <ScrollView
         style={styles.container}
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: insets.bottom + 40 },
+        ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Cabeçalho do Perfil (Avatar, Nome Jão, Ver perfil) */}
+        {/* Cabeçalho do Perfil */}
         <View style={styles.profileHeader}>
           <Image
-            source={USER_PROFILE.avatarSource ?? { uri: USER_PROFILE.avatarUrl }}
+            source={
+              USER_PROFILE.avatarSource ?? { uri: USER_PROFILE.avatarUrl }
+            }
             style={styles.avatar}
             contentFit="cover"
           />
@@ -75,7 +86,12 @@ export default function ProfileScreen() {
         <View style={styles.menuSection}>
           <Pressable
             style={styles.menuRow}
-            onPress={() => router.push({ pathname: '/account', params: { type: 'add-account' } })}
+            onPress={() =>
+              router.push({
+                pathname: '/account',
+                params: { type: 'add-account' },
+              })
+            }
             accessibilityRole="button"
             accessibilityLabel="Adicionar conta"
           >
@@ -86,7 +102,7 @@ export default function ProfileScreen() {
                 web: 'add',
               }}
               size={24}
-              tintColor={Colors.textPrimary}
+              tintColor={colors.textPrimary}
               type="hierarchical"
             />
             <View style={styles.menuTextGroup}>
@@ -102,7 +118,7 @@ export default function ProfileScreen() {
                 web: 'chevron_right',
               }}
               size={18}
-              tintColor={Colors.textSecondary}
+              tintColor={colors.textSecondary}
               type="hierarchical"
             />
           </Pressable>
@@ -110,7 +126,9 @@ export default function ProfileScreen() {
           {/* Badge de Assinatura Premium Universitário */}
           <Pressable
             style={styles.menuRow}
-            onPress={() => router.push({ pathname: '/account', params: { type: 'premium' } })}
+            onPress={() =>
+              router.push({ pathname: '/account', params: { type: 'premium' } })
+            }
             accessibilityRole="button"
             accessibilityLabel="Premium"
           >
@@ -121,11 +139,11 @@ export default function ProfileScreen() {
                 web: 'star',
               }}
               size={24}
-              tintColor={Colors.textPrimary}
+              tintColor={colors.textPrimary}
               type="hierarchical"
             />
             <View style={styles.menuTextGroup}>
-              <Text style={styles.menuTitle}> Premium</Text>
+              <Text style={styles.menuTitle}>Premium</Text>
             </View>
             <View style={styles.premiumBadge}>
               <Text style={styles.premiumBadgeText}>{USER_PROFILE.plan}</Text>
@@ -134,7 +152,9 @@ export default function ProfileScreen() {
 
           <Pressable
             style={styles.menuRow}
-            onPress={() => router.push({ pathname: '/account', params: { type: 'stats' } })}
+            onPress={() =>
+              router.push({ pathname: '/account', params: { type: 'stats' } })
+            }
             accessibilityRole="button"
             accessibilityLabel="Estatísticas Musicais"
           >
@@ -145,7 +165,7 @@ export default function ProfileScreen() {
                 web: 'insights',
               }}
               size={24}
-              tintColor={Colors.textPrimary}
+              tintColor={colors.textPrimary}
               type="hierarchical"
             />
             <View style={styles.menuTextGroup}>
@@ -158,14 +178,16 @@ export default function ProfileScreen() {
                 web: 'chevron_right',
               }}
               size={18}
-              tintColor={Colors.textSecondary}
+              tintColor={colors.textSecondary}
               type="hierarchical"
             />
           </Pressable>
 
           <Pressable
             style={styles.menuRow}
-            onPress={() => router.push({ pathname: '/account', params: { type: 'recents' } })}
+            onPress={() =>
+              router.push({ pathname: '/account', params: { type: 'recents' } })
+            }
             accessibilityRole="button"
             accessibilityLabel="Recentes"
           >
@@ -176,7 +198,7 @@ export default function ProfileScreen() {
                 web: 'history',
               }}
               size={24}
-              tintColor={Colors.textPrimary}
+              tintColor={colors.textPrimary}
               type="hierarchical"
             />
             <View style={styles.menuTextGroup}>
@@ -189,14 +211,16 @@ export default function ProfileScreen() {
                 web: 'chevron_right',
               }}
               size={18}
-              tintColor={Colors.textSecondary}
+              tintColor={colors.textSecondary}
               type="hierarchical"
             />
           </Pressable>
 
           <Pressable
             style={styles.menuRow}
-            onPress={() => router.push({ pathname: '/account', params: { type: 'updates' } })}
+            onPress={() =>
+              router.push({ pathname: '/account', params: { type: 'updates' } })
+            }
             accessibilityRole="button"
             accessibilityLabel="Suas atualizações"
           >
@@ -207,7 +231,7 @@ export default function ProfileScreen() {
                 web: 'campaign',
               }}
               size={24}
-              tintColor={Colors.textPrimary}
+              tintColor={colors.textPrimary}
               type="hierarchical"
             />
             <View style={styles.menuTextGroup}>
@@ -220,7 +244,7 @@ export default function ProfileScreen() {
                 web: 'chevron_right',
               }}
               size={18}
-              tintColor={Colors.textSecondary}
+              tintColor={colors.textSecondary}
               type="hierarchical"
             />
           </Pressable>
@@ -238,7 +262,7 @@ export default function ProfileScreen() {
                 web: 'settings',
               }}
               size={24}
-              tintColor={Colors.textPrimary}
+              tintColor={colors.textPrimary}
               type="hierarchical"
             />
             <View style={styles.menuTextGroup}>
@@ -251,13 +275,13 @@ export default function ProfileScreen() {
                 web: 'chevron_right',
               }}
               size={18}
-              tintColor={Colors.textSecondary}
+              tintColor={colors.textSecondary}
               type="hierarchical"
             />
           </Pressable>
         </View>
 
-        {/* Carrossel de Atividade de Amigos (Nomes Reais/Normais) Clicáveis */}
+        {/* Carrossel de Atividade de Amigos */}
         <View style={styles.friendsSection}>
           <ScrollView
             horizontal
@@ -352,14 +376,19 @@ export default function ProfileScreen() {
                   web: 'chevron_right',
                 }}
                 size={18}
-                tintColor={Colors.textPrimary}
+                tintColor={colors.textPrimary}
                 type="hierarchical"
               />
             </View>
 
             <Pressable
               hitSlop={8}
-              onPress={() => router.push({ pathname: '/chat', params: { id: DIRECT_MESSAGES[0].id } })}
+              onPress={() =>
+                router.push({
+                  pathname: '/chat',
+                  params: { id: DIRECT_MESSAGES[0].id },
+                })
+              }
               accessibilityRole="button"
               accessibilityLabel="Escrever mensagem"
             >
@@ -370,24 +399,25 @@ export default function ProfileScreen() {
                   web: 'edit',
                 }}
                 size={22}
-                tintColor={Colors.textPrimary}
+                tintColor={colors.textPrimary}
                 type="hierarchical"
               />
             </Pressable>
           </View>
 
-          {/* Lista de Mensagens Diretas Clicáveis */}
           <View style={styles.messagesList}>
             {DIRECT_MESSAGES.map((dm) => (
               <Pressable
                 key={dm.id}
                 style={styles.dmRow}
-                onPress={() => router.push({ pathname: '/chat', params: { id: dm.id } })}
+                onPress={() =>
+                  router.push({ pathname: '/chat', params: { id: dm.id } })
+                }
                 accessibilityRole="button"
                 accessibilityLabel={`Abrir conversa com ${dm.senderName}`}
               >
                 <Image
-                  source={{ uri: dm.avatarUrl }}
+                  source={dm.avatarSource ?? { uri: dm.avatarUrl }}
                   style={styles.dmAvatar}
                   contentFit="cover"
                 />
@@ -404,7 +434,7 @@ export default function ProfileScreen() {
                     web: 'chevron_right',
                   }}
                   size={16}
-                  tintColor={Colors.textMuted}
+                  tintColor={colors.textMuted}
                   type="hierarchical"
                 />
               </Pressable>
@@ -412,7 +442,12 @@ export default function ProfileScreen() {
 
             <Pressable
               style={styles.newChatRow}
-              onPress={() => router.push({ pathname: '/chat', params: { id: DIRECT_MESSAGES[0].id } })}
+              onPress={() =>
+                router.push({
+                  pathname: '/chat',
+                  params: { id: DIRECT_MESSAGES[0].id },
+                })
+              }
               accessibilityRole="button"
               accessibilityLabel="Nova conversa"
             >
@@ -424,7 +459,7 @@ export default function ProfileScreen() {
                     web: 'edit',
                   }}
                   size={20}
-                  tintColor={Colors.textPrimary}
+                  tintColor={colors.textPrimary}
                   type="hierarchical"
                 />
               </View>
@@ -437,230 +472,232 @@ export default function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  topBar: {
-    height: 48,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  container: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: Spacing.md,
-  },
-  profileHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-    marginTop: Spacing.xs,
-  },
-  avatar: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: Colors.backgroundCard,
-  },
-  profileTextGroup: {
-    marginLeft: Spacing.md,
-    justifyContent: 'center',
-  },
-  userName: {
-    ...Typography.titleLarge,
-    fontSize: 22,
-    fontWeight: '800',
-    marginBottom: 2,
-  },
-  viewProfileText: {
-    ...Typography.bodySmall,
-    color: Colors.textSecondary,
-    fontSize: 13,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: Colors.border,
-    marginVertical: Spacing.sm,
-  },
-  menuSection: {
-    gap: Spacing.md,
-    marginVertical: Spacing.md,
-  },
-  menuRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 4,
-  },
-  menuTextGroup: {
-    flex: 1,
-    marginLeft: Spacing.md,
-    justifyContent: 'center',
-  },
-  menuTitle: {
-    ...Typography.bodyMedium,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  menuSubtitle: {
-    ...Typography.bodySmall,
-    color: Colors.textSecondary,
-    fontSize: 12,
-    marginTop: 2,
-  },
-  premiumBadge: {
-    backgroundColor: '#7CD1B8', // tom verde pastel do Universitário no print
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 14,
-  },
-  premiumBadgeText: {
-    color: '#121212',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  friendsSection: {
-    marginVertical: Spacing.md,
-    paddingVertical: Spacing.sm,
-  },
-  friendsList: {
-    gap: Spacing.md,
-    paddingRight: Spacing.md,
-  },
-  friendCard: {
-    alignItems: 'center',
-    width: 68,
-  },
-  friendAvatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    marginBottom: 6,
-    backgroundColor: Colors.surfaceCard,
-  },
-  friendName: {
-    ...Typography.bodySmall,
-    fontSize: 12,
-    fontWeight: '700',
-    textAlign: 'center',
-    color: Colors.textPrimary,
-    marginBottom: 2,
-  },
-  friendTrack: {
-    ...Typography.caption,
-    fontSize: 10,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-  },
-  friendPlaylistsSection: {
-    marginTop: Spacing.md,
-  },
-  friendPlaylistsTitle: {
-    ...Typography.titleMedium,
-    fontSize: 18,
-    fontWeight: '800',
-    marginBottom: Spacing.md,
-  },
-  friendPlaylistList: {
-    gap: Spacing.md,
-    paddingRight: Spacing.md,
-  },
-  friendPlaylistCard: {
-    width: 130,
-  },
-  friendPlaylistCover: {
-    width: 130,
-    height: 130,
-    borderRadius: 6,
-    marginBottom: Spacing.sm,
-    backgroundColor: Colors.surfaceCard,
-  },
-  friendPlaylistName: {
-    ...Typography.bodyMedium,
-    fontWeight: '700',
-    fontSize: 13,
-    marginBottom: 2,
-  },
-  friendPlaylistOwner: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-  },
-  messagesSection: {
-    marginTop: Spacing.md,
-  },
-  messagesHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.md,
-  },
-  messagesHeadingGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  messagesTitle: {
-    ...Typography.titleMedium,
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  messagesList: {
-    gap: Spacing.md,
-  },
-  dmRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 4,
-  },
-  dmAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.surfaceCard,
-  },
-  dmContent: {
-    flex: 1,
-    marginLeft: Spacing.md,
-    justifyContent: 'center',
-  },
-  dmName: {
-    ...Typography.bodyMedium,
-    fontWeight: '700',
-    fontSize: 14,
-    marginBottom: 2,
-  },
-  dmPreview: {
-    ...Typography.bodySmall,
-    color: Colors.textSecondary,
-    fontSize: 12,
-  },
-  newChatRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    marginTop: 4,
-  },
-  newChatIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.backgroundCard,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  newChatText: {
-    ...Typography.bodyMedium,
-    fontWeight: '700',
-    fontSize: 14,
-    marginLeft: Spacing.md,
-  },
-});
+function createStyles(colors: ThemeColors, typography: ThemeTypography) {
+  return StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    topBar: {
+      height: 48,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: Spacing.md,
+    },
+    backButton: {
+      width: 40,
+      height: 40,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    container: {
+      flex: 1,
+    },
+    content: {
+      paddingHorizontal: Spacing.md,
+    },
+    profileHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: Spacing.md,
+      marginTop: Spacing.xs,
+    },
+    avatar: {
+      width: 58,
+      height: 58,
+      borderRadius: 29,
+      backgroundColor: colors.backgroundCard,
+    },
+    profileTextGroup: {
+      marginLeft: Spacing.md,
+      justifyContent: 'center',
+    },
+    userName: {
+      ...typography.titleLarge,
+      fontSize: 22,
+      fontWeight: '800',
+      marginBottom: 2,
+    },
+    viewProfileText: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      fontSize: 13,
+    },
+    divider: {
+      height: 1,
+      backgroundColor: colors.border,
+      marginVertical: Spacing.sm,
+    },
+    menuSection: {
+      gap: Spacing.md,
+      marginVertical: Spacing.md,
+    },
+    menuRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 4,
+    },
+    menuTextGroup: {
+      flex: 1,
+      marginLeft: Spacing.md,
+      justifyContent: 'center',
+    },
+    menuTitle: {
+      ...typography.bodyMedium,
+      fontSize: 15,
+      fontWeight: '600',
+    },
+    menuSubtitle: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      fontSize: 12,
+      marginTop: 2,
+    },
+    premiumBadge: {
+      backgroundColor: colors.premiumMint,
+      paddingHorizontal: 12,
+      paddingVertical: 5,
+      borderRadius: Radius.lg,
+    },
+    premiumBadgeText: {
+      color: colors.premiumMintText,
+      fontSize: 12,
+      fontWeight: '700',
+    },
+    friendsSection: {
+      marginVertical: Spacing.md,
+      paddingVertical: Spacing.sm,
+    },
+    friendsList: {
+      gap: Spacing.md,
+      paddingRight: Spacing.md,
+    },
+    friendCard: {
+      alignItems: 'center',
+      width: 68,
+    },
+    friendAvatar: {
+      width: 52,
+      height: 52,
+      borderRadius: 26,
+      marginBottom: 6,
+      backgroundColor: colors.surfaceCard,
+    },
+    friendName: {
+      ...typography.bodySmall,
+      fontSize: 12,
+      fontWeight: '700',
+      textAlign: 'center',
+      color: colors.textPrimary,
+      marginBottom: 2,
+    },
+    friendTrack: {
+      ...typography.caption,
+      fontSize: 10,
+      color: colors.textSecondary,
+      textAlign: 'center',
+    },
+    friendPlaylistsSection: {
+      marginTop: Spacing.md,
+    },
+    friendPlaylistsTitle: {
+      ...typography.titleMedium,
+      fontSize: 18,
+      fontWeight: '800',
+      marginBottom: Spacing.md,
+    },
+    friendPlaylistList: {
+      gap: Spacing.md,
+      paddingRight: Spacing.md,
+    },
+    friendPlaylistCard: {
+      width: 130,
+    },
+    friendPlaylistCover: {
+      width: 130,
+      height: 130,
+      borderRadius: Radius.sm,
+      marginBottom: Spacing.sm,
+      backgroundColor: colors.surfaceCard,
+    },
+    friendPlaylistName: {
+      ...typography.bodyMedium,
+      fontWeight: '700',
+      fontSize: 13,
+      marginBottom: 2,
+    },
+    friendPlaylistOwner: {
+      ...typography.caption,
+      color: colors.textSecondary,
+    },
+    messagesSection: {
+      marginTop: Spacing.md,
+    },
+    messagesHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: Spacing.md,
+    },
+    messagesHeadingGroup: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    messagesTitle: {
+      ...typography.titleMedium,
+      fontSize: 18,
+      fontWeight: '800',
+    },
+    messagesList: {
+      gap: Spacing.md,
+    },
+    dmRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 4,
+    },
+    dmAvatar: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: colors.surfaceCard,
+    },
+    dmContent: {
+      flex: 1,
+      marginLeft: Spacing.md,
+      justifyContent: 'center',
+    },
+    dmName: {
+      ...typography.bodyMedium,
+      fontWeight: '700',
+      fontSize: 14,
+      marginBottom: 2,
+    },
+    dmPreview: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      fontSize: 12,
+    },
+    newChatRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 6,
+      marginTop: 4,
+    },
+    newChatIconCircle: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: colors.backgroundCard,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    newChatText: {
+      ...typography.bodyMedium,
+      fontWeight: '700',
+      fontSize: 14,
+      marginLeft: Spacing.md,
+    },
+  });
+}

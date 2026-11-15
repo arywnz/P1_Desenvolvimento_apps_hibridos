@@ -1,14 +1,35 @@
 import { Image } from 'expo-image';
 import { useRouter, useSegments } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Colors, Spacing, Typography } from '../constants/theme';
+import { useMemo } from 'react';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  Radius,
+  Shadows,
+  Spacing,
+  type ThemeColors,
+  type ThemeTypography,
+} from '../constants/theme';
 import { usePlayer } from '../context/PlayerContext';
+import { useTheme } from '../context/ThemeContext';
 
 export function MiniPlayer() {
   const router = useRouter();
   const segments = useSegments();
-  const { currentTrack, isPlaying, togglePlayPause, toggleLike, positionSeconds } = usePlayer();
+  const insets = useSafeAreaInsets();
+  const { colors, typography } = useTheme();
+  const { currentTrack, isPlaying, togglePlayPause, toggleLike, positionSeconds } =
+    usePlayer();
+
+  const tabBarHeight = 60 + Math.max(insets.bottom, 12);
+  const bottomOffset =
+    tabBarHeight + (Platform.select({ ios: 4, android: 6, default: 4 }) ?? 4);
+
+  const styles = useMemo(
+    () => createStyles(colors, typography, bottomOffset),
+    [colors, typography, bottomOffset]
+  );
 
   // Esconder o mini player na tela de Criar (Bottom Sheet) e no Player Fullscreen
   const segmentList = segments as string[];
@@ -17,7 +38,8 @@ export function MiniPlayer() {
 
   if (!currentTrack || isCreateScreen || isPlayerScreen) return null;
 
-  const progressPercent = (positionSeconds / (currentTrack.durationSeconds || 1)) * 100;
+  const progressPercent =
+    (positionSeconds / (currentTrack.durationSeconds || 1)) * 100;
 
   return (
     <View style={styles.container}>
@@ -47,7 +69,6 @@ export function MiniPlayer() {
             hitSlop={8}
             onPress={(e) => {
               e.stopPropagation();
-              // toggle device connect
             }}
             accessibilityRole="button"
             accessibilityLabel="Dispositivos conectados"
@@ -59,7 +80,7 @@ export function MiniPlayer() {
                 web: 'speaker_group',
               }}
               size={20}
-              tintColor={Colors.textSecondary}
+              tintColor={colors.playerTextSecondary}
               type="hierarchical"
             />
           </Pressable>
@@ -80,7 +101,9 @@ export function MiniPlayer() {
                 web: currentTrack.liked ? 'check_circle' : 'favorite_border',
               }}
               size={22}
-              tintColor={currentTrack.liked ? Colors.primary : Colors.textSecondary}
+              tintColor={
+                currentTrack.liked ? colors.primary : colors.playerTextSecondary
+              }
               type="hierarchical"
             />
           </Pressable>
@@ -101,7 +124,7 @@ export function MiniPlayer() {
                 web: isPlaying ? 'pause' : 'play_arrow',
               }}
               size={24}
-              tintColor={Colors.textPrimary}
+              tintColor={colors.playerTextPrimary}
               type="hierarchical"
             />
           </Pressable>
@@ -109,68 +132,73 @@ export function MiniPlayer() {
       </Pressable>
 
       <View style={styles.progressBarBackground}>
-        <View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
+        <View
+          style={[styles.progressBarFill, { width: `${progressPercent}%` }]}
+        />
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    bottom: 74, // exatamente acima da tab bar
-    left: Spacing.sm,
-    right: Spacing.sm,
-    backgroundColor: Colors.playerBackground, // tom vinho/marrom escuro do print
-    borderRadius: 8,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 6,
-    elevation: 8,
-  },
-  inner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 6,
-    height: 56,
-  },
-  cover: {
-    width: 44,
-    height: 44,
-    borderRadius: 4,
-    backgroundColor: Colors.surfaceCard,
-  },
-  info: {
-    flex: 1,
-    marginLeft: Spacing.sm,
-    justifyContent: 'center',
-  },
-  title: {
-    ...Typography.bodyMedium,
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  artist: {
-    ...Typography.bodySmall,
-    color: Colors.textSecondary,
-    fontSize: 12,
-  },
-  actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    paddingRight: Spacing.xs,
-  },
-  progressBarBackground: {
-    height: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    width: '100%',
-  },
-  progressBarFill: {
-    height: 2,
-    backgroundColor: Colors.primary,
-  },
-});
+function createStyles(
+  colors: ThemeColors,
+  typography: ThemeTypography,
+  bottomOffset: number
+) {
+  return StyleSheet.create({
+    container: {
+      position: 'absolute',
+      bottom: bottomOffset,
+      left: Spacing.sm,
+      right: Spacing.sm,
+      backgroundColor: colors.playerBackground,
+      borderRadius: Radius.md,
+      overflow: 'hidden',
+      ...Shadows.floating,
+    },
+    inner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: 6,
+      height: 56,
+    },
+    cover: {
+      width: 44,
+      height: 44,
+      borderRadius: Radius.xs,
+      backgroundColor: colors.surfaceCard,
+    },
+    info: {
+      flex: 1,
+      marginLeft: Spacing.sm,
+      justifyContent: 'center',
+    },
+    title: {
+      ...typography.bodyMedium,
+      color: colors.playerTextPrimary,
+      fontWeight: '700',
+      fontSize: 13,
+    },
+    artist: {
+      ...typography.bodySmall,
+      color: colors.playerTextSecondary,
+      fontSize: 12,
+    },
+    actions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.md,
+      paddingRight: Spacing.xs,
+    },
+    progressBarBackground: {
+      height: 2,
+      backgroundColor: colors.progressTrack,
+      width: '100%',
+    },
+    progressBarFill: {
+      height: 2,
+      backgroundColor: colors.primary,
+    },
+  });
+}

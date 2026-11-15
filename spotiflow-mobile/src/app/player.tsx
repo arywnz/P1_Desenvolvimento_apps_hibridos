@@ -1,21 +1,33 @@
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
+  type GestureResponderEvent,
+  type LayoutChangeEvent,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors, Spacing, Typography } from '../constants/theme';
+import {
+  Radius,
+  Shadows,
+  Spacing,
+  type ThemeColors,
+  type ThemeTypography,
+} from '../constants/theme';
 import { usePlayer } from '../context/PlayerContext';
+import { useTheme } from '../context/ThemeContext';
 
 export default function PlayerScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const { colors, typography } = useTheme();
   const {
     currentTrack,
     isPlaying,
@@ -27,6 +39,13 @@ export default function PlayerScreen() {
 
   const [isShuffle, setIsShuffle] = useState(false);
   const [isRepeat, setIsRepeat] = useState(false);
+  const [progressBarWidth, setProgressBarWidth] = useState(0);
+
+  const coverSize = Math.min(width - Spacing.lg * 2, 340);
+  const styles = useMemo(
+    () => createStyles(colors, typography, coverSize),
+    [colors, typography, coverSize]
+  );
 
   if (!currentTrack) return null;
 
@@ -39,10 +58,15 @@ export default function PlayerScreen() {
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
-  const handleProgressBarPress = (e: any) => {
+  const handleProgressBarLayout = (e: LayoutChangeEvent) => {
+    setProgressBarWidth(e.nativeEvent.layout.width);
+  };
+
+  const handleProgressBarPress = (e: GestureResponderEvent) => {
+    const effectiveWidth =
+      progressBarWidth > 0 ? progressBarWidth : width - Spacing.lg * 2;
     const { locationX } = e.nativeEvent;
-    // estimando proporção com base na largura da barra
-    const newRatio = Math.max(0, Math.min(locationX / 330, 1));
+    const newRatio = Math.max(0, Math.min(locationX / effectiveWidth, 1));
     seekTo(Math.floor(newRatio * totalSeconds));
   };
 
@@ -63,7 +87,7 @@ export default function PlayerScreen() {
               web: 'keyboard_arrow_down',
             }}
             size={28}
-            tintColor={Colors.textPrimary}
+            tintColor={colors.playerTextPrimary}
             type="hierarchical"
           />
         </Pressable>
@@ -87,7 +111,7 @@ export default function PlayerScreen() {
               web: 'more_vert',
             }}
             size={24}
-            tintColor={Colors.textPrimary}
+            tintColor={colors.playerTextPrimary}
             type="hierarchical"
           />
         </Pressable>
@@ -95,7 +119,10 @@ export default function PlayerScreen() {
 
       <ScrollView
         style={styles.container}
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 20 }]}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: insets.bottom + 20 },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         {/* Capa Gigante do Álbum */}
@@ -122,7 +149,9 @@ export default function PlayerScreen() {
             hitSlop={10}
             onPress={toggleLike}
             accessibilityRole="button"
-            accessibilityLabel={currentTrack.liked ? 'Remover dos favoritos' : 'Favoritar'}
+            accessibilityLabel={
+              currentTrack.liked ? 'Remover dos favoritos' : 'Favoritar'
+            }
           >
             <SymbolView
               name={{
@@ -131,7 +160,9 @@ export default function PlayerScreen() {
                 web: currentTrack.liked ? 'check_circle' : 'favorite_border',
               }}
               size={28}
-              tintColor={currentTrack.liked ? Colors.primary : Colors.textSecondary}
+              tintColor={
+                currentTrack.liked ? colors.primary : colors.playerTextSecondary
+              }
               type="hierarchical"
             />
           </Pressable>
@@ -141,6 +172,7 @@ export default function PlayerScreen() {
         <View style={styles.progressSection}>
           <Pressable
             style={styles.progressBarBackground}
+            onLayout={handleProgressBarLayout}
             onPress={handleProgressBarPress}
             accessibilityRole="adjustable"
             accessibilityLabel="Progresso da música"
@@ -165,7 +197,7 @@ export default function PlayerScreen() {
           </View>
         </View>
 
-        {/* Controles Principais de Mídia (Shuffle, Anterior, Play/Pause Verde, Próxima, Repeat) */}
+        {/* Controles Principais de Mídia */}
         <View style={styles.playbackControls}>
           <Pressable
             hitSlop={8}
@@ -180,7 +212,9 @@ export default function PlayerScreen() {
                 web: 'shuffle',
               }}
               size={24}
-              tintColor={isShuffle ? Colors.primary : Colors.textSecondary}
+              tintColor={
+                isShuffle ? colors.primary : colors.playerTextSecondary
+              }
               type="hierarchical"
             />
           </Pressable>
@@ -197,12 +231,11 @@ export default function PlayerScreen() {
                 web: 'skip_previous',
               }}
               size={34}
-              tintColor={Colors.textPrimary}
+              tintColor={colors.playerTextPrimary}
               type="hierarchical"
             />
           </Pressable>
 
-          {/* Botão Play / Pause com anel verde metálico do Spotify */}
           <Pressable
             style={styles.mainPlayButton}
             onPress={togglePlayPause}
@@ -216,7 +249,7 @@ export default function PlayerScreen() {
                 web: isPlaying ? 'pause' : 'play_arrow',
               }}
               size={36}
-              tintColor="#121212"
+              tintColor={colors.playerPlayIcon}
               type="hierarchical"
             />
           </Pressable>
@@ -233,7 +266,7 @@ export default function PlayerScreen() {
                 web: 'skip_next',
               }}
               size={34}
-              tintColor={Colors.textPrimary}
+              tintColor={colors.playerTextPrimary}
               type="hierarchical"
             />
           </Pressable>
@@ -251,7 +284,7 @@ export default function PlayerScreen() {
                 web: 'repeat',
               }}
               size={24}
-              tintColor={isRepeat ? Colors.primary : Colors.textSecondary}
+              tintColor={isRepeat ? colors.primary : colors.playerTextSecondary}
               type="hierarchical"
             />
           </Pressable>
@@ -271,7 +304,7 @@ export default function PlayerScreen() {
                 web: 'speaker_group',
               }}
               size={22}
-              tintColor={Colors.textSecondary}
+              tintColor={colors.playerTextSecondary}
               type="hierarchical"
             />
           </Pressable>
@@ -289,7 +322,7 @@ export default function PlayerScreen() {
                   web: 'share',
                 }}
                 size={22}
-                tintColor={Colors.textSecondary}
+                tintColor={colors.playerTextSecondary}
                 type="hierarchical"
               />
             </Pressable>
@@ -306,7 +339,7 @@ export default function PlayerScreen() {
                   web: 'queue_music',
                 }}
                 size={24}
-                tintColor={Colors.textSecondary}
+                tintColor={colors.playerTextSecondary}
                 type="hierarchical"
               />
             </Pressable>
@@ -317,142 +350,145 @@ export default function PlayerScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#3E1C1A', // tom acastanhado/vinho escuro do print oficial do Cazuza
-  },
-  topHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md,
-    height: 54,
-  },
-  iconButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  topHeaderCenter: {
-    alignItems: 'center',
-  },
-  playlistEyebrow: {
-    ...Typography.caption,
-    fontSize: 10,
-    letterSpacing: 1,
-    color: Colors.textSecondary,
-    fontWeight: '700',
-  },
-  playlistName: {
-    ...Typography.bodySmall,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-  },
-  container: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-    justifyContent: 'space-between',
-  },
-  coverContainer: {
-    alignItems: 'center',
-    marginVertical: Spacing.lg,
-  },
-  coverImage: {
-    width: 320,
-    height: 320,
-    borderRadius: 8,
-    backgroundColor: Colors.surfaceCard,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.6,
-    shadowRadius: 14,
-    elevation: 12,
-  },
-  trackDetailsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.lg,
-  },
-  trackTextGroup: {
-    flex: 1,
-    paddingRight: Spacing.md,
-  },
-  trackTitle: {
-    ...Typography.titleLarge,
-    fontSize: 22,
-    fontWeight: '800',
-    marginBottom: 4,
-  },
-  trackArtist: {
-    ...Typography.bodyMedium,
-    color: Colors.textSecondary,
-    fontSize: 15,
-  },
-  progressSection: {
-    marginBottom: Spacing.lg,
-  },
-  progressBarBackground: {
-    height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    borderRadius: 2,
-    position: 'relative',
-    justifyContent: 'center',
-  },
-  progressBarFill: {
-    height: 4,
-    backgroundColor: Colors.textPrimary,
-    borderRadius: 2,
-  },
-  progressThumb: {
-    position: 'absolute',
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: Colors.textPrimary,
-    top: -3,
-  },
-  timeLabelsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
-  },
-  timeText: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    fontSize: 11,
-  },
-  playbackControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginVertical: Spacing.lg,
-    paddingHorizontal: Spacing.xs,
-  },
-  mainPlayButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: Colors.primary,
-  },
-  bottomBarRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: Spacing.lg,
-  },
-  bottomBarRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.lg,
-  },
-});
+function createStyles(
+  colors: ThemeColors,
+  typography: ThemeTypography,
+  coverSize: number
+) {
+  return StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.playerBackground,
+    },
+    topHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: Spacing.md,
+      height: 54,
+    },
+    iconButton: {
+      width: 40,
+      height: 40,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    topHeaderCenter: {
+      alignItems: 'center',
+    },
+    playlistEyebrow: {
+      ...typography.caption,
+      fontSize: 10,
+      letterSpacing: 1,
+      color: colors.playerTextSecondary,
+      fontWeight: '700',
+    },
+    playlistName: {
+      ...typography.bodySmall,
+      fontWeight: '700',
+      color: colors.playerTextPrimary,
+    },
+    container: {
+      flex: 1,
+    },
+    content: {
+      paddingHorizontal: Spacing.lg,
+      paddingTop: Spacing.md,
+      justifyContent: 'space-between',
+    },
+    coverContainer: {
+      alignItems: 'center',
+      marginVertical: Spacing.lg,
+    },
+    coverImage: {
+      width: coverSize,
+      height: coverSize,
+      borderRadius: Radius.md,
+      backgroundColor: colors.surfaceCard,
+      ...Shadows.hero,
+    },
+    trackDetailsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: Spacing.lg,
+    },
+    trackTextGroup: {
+      flex: 1,
+      paddingRight: Spacing.md,
+    },
+    trackTitle: {
+      ...typography.titleLarge,
+      color: colors.playerTextPrimary,
+      fontSize: 22,
+      fontWeight: '800',
+      marginBottom: 4,
+    },
+    trackArtist: {
+      ...typography.bodyMedium,
+      color: colors.playerTextSecondary,
+      fontSize: 15,
+    },
+    progressSection: {
+      marginBottom: Spacing.lg,
+    },
+    progressBarBackground: {
+      height: 4,
+      backgroundColor: colors.playerTrackBg,
+      borderRadius: 2,
+      position: 'relative',
+      justifyContent: 'center',
+    },
+    progressBarFill: {
+      height: 4,
+      backgroundColor: colors.playerTextPrimary,
+      borderRadius: 2,
+    },
+    progressThumb: {
+      position: 'absolute',
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: colors.playerTextPrimary,
+      top: -3,
+    },
+    timeLabelsRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 8,
+    },
+    timeText: {
+      ...typography.caption,
+      color: colors.playerTextMuted,
+      fontSize: 11,
+    },
+    playbackControls: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginVertical: Spacing.lg,
+      paddingHorizontal: Spacing.xs,
+    },
+    mainPlayButton: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      backgroundColor: colors.playerPlayBg,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 3,
+      borderColor: colors.primary,
+    },
+    bottomBarRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: Spacing.lg,
+    },
+    bottomBarRight: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.lg,
+    },
+  });
+}

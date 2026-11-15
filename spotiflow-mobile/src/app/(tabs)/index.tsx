@@ -1,16 +1,29 @@
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Spacing, Typography } from '../../constants/theme';
 import {
   CURRENT_TRACK,
   MOCK_PLAYLISTS,
   USER_PROFILE,
 } from '../../constants/mockData';
+import {
+  Radius,
+  Spacing,
+  type ThemeColors,
+  type ThemeTypography,
+} from '../../constants/theme';
 import { usePlayer } from '../../context/PlayerContext';
+import { useTheme } from '../../context/ThemeContext';
 
 const MEDIA_FILTERS = ['Tudo', 'Musicas', 'Podcasts'];
 const QUICK_SHORTCUTS = MOCK_PLAYLISTS.slice(0, 6);
@@ -22,8 +35,16 @@ const RECOMMENDED_MIXES = MOCK_PLAYLISTS.slice(1, 5);
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const { colors, typography } = useTheme();
   const [activeFilter, setActiveFilter] = useState(MEDIA_FILTERS[0]);
   const { playTrack } = usePlayer();
+
+  const shortcutWidth = Math.floor((width - Spacing.md * 2 - Spacing.sm) / 2);
+  const styles = useMemo(
+    () => createStyles(colors, typography, shortcutWidth),
+    [colors, typography, shortcutWidth]
+  );
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -40,7 +61,9 @@ export default function HomeScreen() {
               accessibilityLabel="Abrir perfil"
             >
               <Image
-                source={USER_PROFILE.avatarSource ?? { uri: USER_PROFILE.avatarUrl }}
+                source={
+                  USER_PROFILE.avatarSource ?? { uri: USER_PROFILE.avatarUrl }
+                }
                 style={styles.avatar}
                 contentFit="cover"
                 accessibilityLabel="Avatar do perfil"
@@ -137,7 +160,7 @@ export default function HomeScreen() {
 
         <View style={styles.djCard}>
           <Image
-            source={{ uri: DJ_PLAYLIST.coverUrl }}
+            source={DJ_PLAYLIST.coverSource ?? { uri: DJ_PLAYLIST.coverUrl }}
             style={styles.djCover}
             contentFit="cover"
           />
@@ -145,7 +168,8 @@ export default function HomeScreen() {
             <Text style={styles.djEyebrow}>DJ do dia</Text>
             <Text style={styles.djTitle}>Sua selecao personalizada</Text>
             <Text style={styles.djSubtitle} numberOfLines={2}>
-              Faixas recentes, classicos e mixes com base no que voce mais ouviu.
+              Faixas recentes, classicos e mixes com base no que voce mais
+              ouviu.
             </Text>
             <Pressable
               style={styles.djButton}
@@ -160,7 +184,7 @@ export default function HomeScreen() {
                   web: 'play_arrow',
                 }}
                 size={18}
-                tintColor={Colors.background}
+                tintColor={colors.onPrimary}
                 type="hierarchical"
               />
               <Text style={styles.djButtonText}>Tocar agora</Text>
@@ -208,186 +232,194 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  container: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.md,
-    paddingBottom: 96,
-  },
-  header: {
-    marginBottom: Spacing.md,
-  },
-  profileGroup: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.backgroundCard,
-  },
-  eyebrow: {
-    ...Typography.bodySmall,
-    marginBottom: 2,
-  },
-  title: {
-    ...Typography.titleLarge,
-    fontSize: 24,
-  },
-  filters: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    marginBottom: Spacing.lg,
-  },
-  filterPill: {
-    minHeight: 34,
-    borderRadius: 17,
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.md,
-    backgroundColor: Colors.backgroundCard,
-  },
-  filterPillActive: {
-    backgroundColor: Colors.primary,
-  },
-  filterText: {
-    ...Typography.bodyMedium,
-    fontWeight: '700',
-  },
-  filterTextActive: {
-    color: Colors.background,
-  },
-  shortcutGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-    marginBottom: Spacing.xl,
-  },
-  shortcutCard: {
-    width: '48.7%',
-    minHeight: 64,
-    borderRadius: 6,
-    overflow: 'hidden',
-    alignItems: 'center',
-    flexDirection: 'row',
-    backgroundColor: Colors.backgroundCard,
-  },
-  shortcutCover: {
-    width: 64,
-    height: 64,
-    backgroundColor: Colors.surfaceCard,
-  },
-  shortcutTitle: {
-    ...Typography.bodyMedium,
-    flex: 1,
-    paddingHorizontal: Spacing.sm,
-    fontWeight: '700',
-  },
-  section: {
-    gap: Spacing.md,
-    marginBottom: Spacing.xl,
-  },
-  sectionTitle: {
-    ...Typography.titleLarge,
-  },
-  recentList: {
-    gap: Spacing.md,
-    paddingRight: Spacing.md,
-  },
-  recentCard: {
-    width: 132,
-  },
-  recentCover: {
-    width: 132,
-    height: 132,
-    borderRadius: 6,
-    marginBottom: Spacing.sm,
-    backgroundColor: Colors.surfaceCard,
-  },
-  recentTitle: {
-    ...Typography.bodyMedium,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  recentSubtitle: {
-    ...Typography.bodySmall,
-  },
-  djCard: {
-    minHeight: 172,
-    borderRadius: 8,
-    overflow: 'hidden',
-    flexDirection: 'row',
-    marginBottom: Spacing.xl,
-    backgroundColor: Colors.playerBackground,
-  },
-  djCover: {
-    width: 136,
-    minHeight: 172,
-    backgroundColor: Colors.surfaceCard,
-  },
-  djContent: {
-    flex: 1,
-    padding: Spacing.md,
-    justifyContent: 'space-between',
-  },
-  djEyebrow: {
-    ...Typography.caption,
-    color: Colors.primary,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-  },
-  djTitle: {
-    ...Typography.titleMedium,
-    fontSize: 18,
-  },
-  djSubtitle: {
-    ...Typography.bodySmall,
-    lineHeight: 17,
-  },
-  djButton: {
-    height: 34,
-    borderRadius: 17,
-    alignSelf: 'flex-start',
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: Spacing.xs,
-    paddingHorizontal: Spacing.md,
-    backgroundColor: Colors.primary,
-  },
-  djButtonText: {
-    ...Typography.bodyMedium,
-    color: Colors.background,
-    fontWeight: '700',
-  },
-  mixList: {
-    gap: Spacing.md,
-    paddingRight: Spacing.md,
-  },
-  mixCard: {
-    width: 150,
-  },
-  mixCover: {
-    width: 150,
-    height: 150,
-    borderRadius: 6,
-    marginBottom: Spacing.sm,
-    backgroundColor: Colors.surfaceCard,
-  },
-  mixTitle: {
-    ...Typography.bodyMedium,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  mixSubtitle: {
-    ...Typography.bodySmall,
-    lineHeight: 16,
-  },
-});
+function createStyles(
+  colors: ThemeColors,
+  typography: ThemeTypography,
+  shortcutWidth: number
+) {
+  return StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    container: {
+      flex: 1,
+    },
+    content: {
+      paddingHorizontal: Spacing.md,
+      paddingTop: Spacing.md,
+      paddingBottom: 96,
+    },
+    header: {
+      marginBottom: Spacing.md,
+    },
+    profileGroup: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: Spacing.sm,
+    },
+    avatar: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: colors.backgroundCard,
+    },
+    eyebrow: {
+      ...typography.bodySmall,
+      marginBottom: 2,
+    },
+    title: {
+      ...typography.titleLarge,
+      fontSize: 24,
+    },
+    filters: {
+      flexDirection: 'row',
+      gap: Spacing.sm,
+      marginBottom: Spacing.lg,
+    },
+    filterPill: {
+      minHeight: 34,
+      borderRadius: Radius.pill,
+      justifyContent: 'center',
+      paddingHorizontal: Spacing.md,
+      backgroundColor: colors.backgroundCard,
+    },
+    filterPillActive: {
+      backgroundColor: colors.primary,
+    },
+    filterText: {
+      ...typography.bodyMedium,
+      fontWeight: '700',
+    },
+    filterTextActive: {
+      color: colors.onPrimary,
+    },
+    shortcutGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: Spacing.sm,
+      marginBottom: Spacing.xl,
+    },
+    shortcutCard: {
+      width: shortcutWidth,
+      minHeight: 64,
+      borderRadius: Radius.sm,
+      overflow: 'hidden',
+      alignItems: 'center',
+      flexDirection: 'row',
+      backgroundColor: colors.backgroundCard,
+    },
+    shortcutCover: {
+      width: 64,
+      height: 64,
+      backgroundColor: colors.surfaceCard,
+    },
+    shortcutTitle: {
+      ...typography.bodyMedium,
+      flex: 1,
+      paddingHorizontal: Spacing.sm,
+      fontWeight: '700',
+    },
+    section: {
+      gap: Spacing.md,
+      marginBottom: Spacing.xl,
+    },
+    sectionTitle: {
+      ...typography.titleLarge,
+    },
+    recentList: {
+      gap: Spacing.md,
+      paddingRight: Spacing.md,
+    },
+    recentCard: {
+      width: 132,
+    },
+    recentCover: {
+      width: 132,
+      height: 132,
+      borderRadius: Radius.sm,
+      marginBottom: Spacing.sm,
+      backgroundColor: colors.surfaceCard,
+    },
+    recentTitle: {
+      ...typography.bodyMedium,
+      fontWeight: '700',
+      marginBottom: 2,
+    },
+    recentSubtitle: {
+      ...typography.bodySmall,
+    },
+    djCard: {
+      minHeight: 172,
+      borderRadius: Radius.md,
+      overflow: 'hidden',
+      flexDirection: 'row',
+      marginBottom: Spacing.xl,
+      backgroundColor: colors.playerBackground,
+    },
+    djCover: {
+      width: 136,
+      minHeight: 172,
+      backgroundColor: colors.surfaceCard,
+    },
+    djContent: {
+      flex: 1,
+      padding: Spacing.md,
+      justifyContent: 'space-between',
+    },
+    djEyebrow: {
+      ...typography.caption,
+      color: colors.primary,
+      fontWeight: '700',
+      textTransform: 'uppercase',
+    },
+    djTitle: {
+      ...typography.titleMedium,
+      color: colors.playerTextPrimary,
+      fontSize: 18,
+    },
+    djSubtitle: {
+      ...typography.bodySmall,
+      color: colors.playerTextSecondary,
+      lineHeight: 17,
+    },
+    djButton: {
+      height: 34,
+      borderRadius: Radius.pill,
+      alignSelf: 'flex-start',
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: Spacing.xs,
+      paddingHorizontal: Spacing.md,
+      backgroundColor: colors.primary,
+    },
+    djButtonText: {
+      ...typography.bodyMedium,
+      color: colors.onPrimary,
+      fontWeight: '700',
+    },
+    mixList: {
+      gap: Spacing.md,
+      paddingRight: Spacing.md,
+    },
+    mixCard: {
+      width: 150,
+    },
+    mixCover: {
+      width: 150,
+      height: 150,
+      borderRadius: Radius.sm,
+      marginBottom: Spacing.sm,
+      backgroundColor: colors.surfaceCard,
+    },
+    mixTitle: {
+      ...typography.bodyMedium,
+      fontWeight: '700',
+      marginBottom: 2,
+    },
+    mixSubtitle: {
+      ...typography.bodySmall,
+      lineHeight: 16,
+    },
+  });
+}

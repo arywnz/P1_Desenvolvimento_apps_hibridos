@@ -1,22 +1,28 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useState } from 'react';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FRIENDS_ACTIVITY, MOCK_PLAYLISTS, Track } from '../../constants/mockData';
-import { Colors, Spacing, Typography } from '../../constants/theme';
+import { FRIENDS_ACTIVITY, MOCK_PLAYLISTS } from '../../constants/mockData';
+import {
+  Radius,
+  Shadows,
+  Spacing,
+  type ThemeColors,
+  type ThemeTypography,
+} from '../../constants/theme';
 import { usePlayer } from '../../context/PlayerContext';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function PlaylistDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { colors, typography } = useTheme();
+  const styles = useMemo(
+    () => createStyles(colors, typography),
+    [colors, typography]
+  );
   const { playTrack, currentTrack, isPlaying, togglePlayPause } = usePlayer();
 
   // Junta todas as playlists (do usuário e dos amigos) para achar pelo ID
@@ -45,7 +51,7 @@ export default function PlaylistDetailScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      {/* Barra de Topo com Voltar e Menu */}
+      {/* Barra de Topo com Voltar */}
       <View style={styles.topBar}>
         <Pressable
           style={styles.backButton}
@@ -60,7 +66,7 @@ export default function PlaylistDetailScreen() {
               web: 'arrow_back',
             }}
             size={24}
-            tintColor={Colors.textPrimary}
+            tintColor={colors.textPrimary}
             type="hierarchical"
           />
         </Pressable>
@@ -97,7 +103,9 @@ export default function PlaylistDetailScreen() {
               hitSlop={8}
               onPress={() => setIsSaved(!isSaved)}
               accessibilityRole="button"
-              accessibilityLabel={isSaved ? 'Remover da biblioteca' : 'Adicionar a biblioteca'}
+              accessibilityLabel={
+                isSaved ? 'Remover da biblioteca' : 'Adicionar a biblioteca'
+              }
             >
               <SymbolView
                 name={{
@@ -106,25 +114,39 @@ export default function PlaylistDetailScreen() {
                   web: isSaved ? 'check_circle' : 'add_circle',
                 }}
                 size={26}
-                tintColor={isSaved ? Colors.primary : Colors.textSecondary}
+                tintColor={isSaved ? colors.primary : colors.textSecondary}
                 type="hierarchical"
               />
             </Pressable>
 
-            <Pressable hitSlop={8} accessibilityRole="button" accessibilityLabel="Baixar playlist">
+            <Pressable
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Baixar playlist"
+            >
               <SymbolView
                 name={{
-                  ios: playlist.isDownloaded ? 'arrow.down.circle.fill' : 'arrow.down.circle',
+                  ios: playlist.isDownloaded
+                    ? 'arrow.down.circle.fill'
+                    : 'arrow.down.circle',
                   android: 'download_for_offline',
                   web: 'download_for_offline',
                 }}
                 size={26}
-                tintColor={playlist.isDownloaded ? Colors.primary : Colors.textSecondary}
+                tintColor={
+                  playlist.isDownloaded
+                    ? colors.primary
+                    : colors.textSecondary
+                }
                 type="hierarchical"
               />
             </Pressable>
 
-            <Pressable hitSlop={8} accessibilityRole="button" accessibilityLabel="Mais opcoes">
+            <Pressable
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Mais opcoes"
+            >
               <SymbolView
                 name={{
                   ios: 'ellipsis',
@@ -132,18 +154,22 @@ export default function PlaylistDetailScreen() {
                   web: 'more_vert',
                 }}
                 size={24}
-                tintColor={Colors.textSecondary}
+                tintColor={colors.textSecondary}
                 type="hierarchical"
               />
             </Pressable>
           </View>
 
-          {/* Botão de Play Verde Circular do Spotify */}
+          {/* Botão de Play Verde Circular */}
           <Pressable
             style={styles.playButton}
             onPress={handlePlayFirst}
             accessibilityRole="button"
-            accessibilityLabel={isCurrentPlaylistPlaying ? 'Pausar playlist' : 'Reproduzir playlist'}
+            accessibilityLabel={
+              isCurrentPlaylistPlaying
+                ? 'Pausar playlist'
+                : 'Reproduzir playlist'
+            }
           >
             <SymbolView
               name={{
@@ -152,7 +178,7 @@ export default function PlaylistDetailScreen() {
                 web: isCurrentPlaylistPlaying ? 'pause' : 'play_arrow',
               }}
               size={28}
-              tintColor={Colors.background}
+              tintColor={colors.onPrimary}
               type="hierarchical"
             />
           </Pressable>
@@ -161,7 +187,6 @@ export default function PlaylistDetailScreen() {
         {/* Lista de Faixas da Playlist */}
         <View style={styles.trackList}>
           {playlist.tracks.map((track, index) => {
-            const isThisTrackPlaying = isPlaying && currentTrack?.id === track.id;
             const isThisTrackSelected = currentTrack?.id === track.id;
 
             return (
@@ -220,7 +245,7 @@ export default function PlaylistDetailScreen() {
                       web: 'more_vert',
                     }}
                     size={20}
-                    tintColor={Colors.textSecondary}
+                    tintColor={colors.textSecondary}
                     type="hierarchical"
                   />
                 </Pressable>
@@ -233,146 +258,140 @@ export default function PlaylistDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  topBar: {
-    height: 52,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  container: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: Spacing.md,
-    paddingBottom: 110,
-  },
-  coverWrapper: {
-    alignItems: 'center',
-    marginVertical: Spacing.lg,
-  },
-  coverImage: {
-    width: 220,
-    height: 220,
-    borderRadius: 8,
-    backgroundColor: Colors.surfaceCard,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 10,
-  },
-  infoSection: {
-    marginBottom: Spacing.lg,
-  },
-  title: {
-    ...Typography.titleLarge,
-    fontSize: 26,
-    fontWeight: '800',
-    marginBottom: 4,
-  },
-  subtitle: {
-    ...Typography.bodyMedium,
-    color: Colors.textSecondary,
-    marginBottom: 8,
-  },
-  metaText: {
-    ...Typography.bodySmall,
-    color: Colors.textMuted,
-  },
-  author: {
-    color: Colors.textPrimary,
-    fontWeight: '700',
-  },
-  actionsBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.xl,
-  },
-  leftActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.lg,
-  },
-  playButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
-    elevation: 8,
-  },
-  trackList: {
-    gap: Spacing.sm,
-    marginTop: Spacing.sm,
-  },
-  trackRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderRadius: 6,
-  },
-  trackRowSelected: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  trackIndex: {
-    ...Typography.bodyMedium,
-    color: Colors.textSecondary,
-    width: 28,
-    textAlign: 'center',
-  },
-  trackIndexActive: {
-    color: Colors.primary,
-    fontWeight: '700',
-  },
-  trackThumb: {
-    width: 44,
-    height: 44,
-    borderRadius: 4,
-    backgroundColor: Colors.surfaceCard,
-    marginLeft: 4,
-  },
-  trackInfo: {
-    flex: 1,
-    marginLeft: Spacing.md,
-    justifyContent: 'center',
-  },
-  trackTitle: {
-    ...Typography.bodyMedium,
-    fontWeight: '700',
-    fontSize: 14,
-    marginBottom: 2,
-  },
-  trackTitleActive: {
-    color: Colors.primary,
-  },
-  trackArtist: {
-    ...Typography.bodySmall,
-    color: Colors.textSecondary,
-    fontSize: 12,
-  },
-  trackDuration: {
-    ...Typography.bodySmall,
-    color: Colors.textMuted,
-    marginRight: Spacing.md,
-  },
-  trackMoreButton: {
-    padding: Spacing.xs,
-  },
-});
+function createStyles(colors: ThemeColors, typography: ThemeTypography) {
+  return StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    topBar: {
+      height: 52,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: Spacing.md,
+    },
+    backButton: {
+      width: 40,
+      height: 40,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    container: {
+      flex: 1,
+    },
+    content: {
+      paddingHorizontal: Spacing.md,
+      paddingBottom: 110,
+    },
+    coverWrapper: {
+      alignItems: 'center',
+      marginVertical: Spacing.lg,
+    },
+    coverImage: {
+      width: 220,
+      height: 220,
+      borderRadius: Radius.md,
+      backgroundColor: colors.surfaceCard,
+      ...Shadows.hero,
+    },
+    infoSection: {
+      marginBottom: Spacing.lg,
+    },
+    title: {
+      ...typography.titleLarge,
+      fontSize: 26,
+      fontWeight: '800',
+      marginBottom: 4,
+    },
+    subtitle: {
+      ...typography.bodyMedium,
+      color: colors.textSecondary,
+      marginBottom: 8,
+    },
+    metaText: {
+      ...typography.bodySmall,
+      color: colors.textMuted,
+    },
+    author: {
+      color: colors.textPrimary,
+      fontWeight: '700',
+    },
+    actionsBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: Spacing.xl,
+    },
+    leftActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.lg,
+    },
+    playButton: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      ...Shadows.floating,
+    },
+    trackList: {
+      gap: Spacing.sm,
+      marginTop: Spacing.sm,
+    },
+    trackRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 8,
+      borderRadius: Radius.sm,
+    },
+    trackRowSelected: {
+      backgroundColor: colors.highlightRow,
+    },
+    trackIndex: {
+      ...typography.bodyMedium,
+      color: colors.textSecondary,
+      width: 28,
+      textAlign: 'center',
+    },
+    trackIndexActive: {
+      color: colors.primary,
+      fontWeight: '700',
+    },
+    trackThumb: {
+      width: 44,
+      height: 44,
+      borderRadius: Radius.xs,
+      backgroundColor: colors.surfaceCard,
+      marginLeft: 4,
+    },
+    trackInfo: {
+      flex: 1,
+      marginLeft: Spacing.md,
+      justifyContent: 'center',
+    },
+    trackTitle: {
+      ...typography.bodyMedium,
+      fontWeight: '700',
+      fontSize: 14,
+      marginBottom: 2,
+    },
+    trackTitleActive: {
+      color: colors.primary,
+    },
+    trackArtist: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      fontSize: 12,
+    },
+    trackDuration: {
+      ...typography.bodySmall,
+      color: colors.textMuted,
+      marginRight: Spacing.md,
+    },
+    trackMoreButton: {
+      padding: Spacing.xs,
+    },
+  });
+}
