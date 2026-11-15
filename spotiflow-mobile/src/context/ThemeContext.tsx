@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
+import { usePersistedState } from '../hooks/usePersistedState';
 import { useColorScheme } from 'react-native';
 import {
   createTypography,
@@ -10,6 +11,7 @@ import {
 } from '../constants/theme';
 
 interface ThemeContextValue {
+  isReady: boolean;
   mode: ThemeMode;
   isDark: boolean;
   colors: ThemeColors;
@@ -22,10 +24,10 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const systemScheme = useColorScheme();
-  // Gancho pronto para Aula 10: substituir useState por usePersistedState('spotiflow:v1:tema', ...)
-  const [mode, setMode] = useState<ThemeMode>(
+  const [storedMode, setMode, isReady] = usePersistedState<ThemeMode>('app:tema',
     systemScheme === 'light' ? 'light' : 'dark'
   );
+  const mode = storedMode === 'light' ? 'light' : 'dark';
 
   const value = useMemo<ThemeContextValue>(() => {
     const isDark = mode === 'dark';
@@ -33,6 +35,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const typography = createTypography(colors);
 
     return {
+      isReady,
       mode,
       isDark,
       colors,
@@ -40,7 +43,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       setMode,
       toggleTheme: () => setMode((prev) => (prev === 'dark' ? 'light' : 'dark')),
     };
-  }, [mode]);
+  }, [mode, isReady, setMode]);
 
   return (
     <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
