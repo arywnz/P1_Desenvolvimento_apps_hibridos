@@ -174,7 +174,10 @@ export default function QueueScreen() {
             </View>
             <Pressable
               hitSlop={8}
-              onPress={() => removeFromQueue(item.id)}
+              onPress={(e) => {
+                e.stopPropagation();
+                removeFromQueue(item.id);
+              }}
               accessibilityRole="button"
               accessibilityLabel={`Remover ${item.title} da fila`}
             >

@@ -11,7 +11,6 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PlayingEqualizer } from './AnimatedMotion';
 import {
@@ -24,12 +23,11 @@ import {
 import { usePlayer } from '../context/PlayerContext';
 import { useTheme } from '../context/ThemeContext';
 
-export function MiniPlayer() {
+export function MiniPlayer({ aboveTabBar = false }: { aboveTabBar?: boolean }) {
   const router = useRouter();
   const segments = useSegments();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const reducedMotion = useReducedMotion();
   const { colors, typography } = useTheme();
   const {
     currentTrack,
@@ -42,9 +40,11 @@ export function MiniPlayer() {
     toggleLike,
   } = usePlayer();
 
+  const segmentList = segments as string[];
   const tabBarHeight = 60 + Math.max(insets.bottom, 12);
-  const bottomOffset =
-    tabBarHeight + (Platform.select({ ios: 4, android: 6, default: 4 }) ?? 4);
+  const bottomOffset = aboveTabBar
+    ? tabBarHeight + (Platform.select({ ios: 4, android: 6, default: 4 }) ?? 4)
+    : Math.max(insets.bottom, 12) + 8;
 
   const horizontalMargin = width > 680 ? Math.floor((width - 640) / 2) : Spacing.sm;
 
@@ -53,12 +53,16 @@ export function MiniPlayer() {
     [colors, typography, bottomOffset, horizontalMargin]
   );
 
-  // Esconder o mini player na tela de Criar (Bottom Sheet) e no Player Fullscreen
-  const segmentList = segments as string[];
-  const isCreateScreen = segmentList.includes('create');
-  const isPlayerScreen = segmentList.includes('player');
+  // Esconder o mini player nos modais e no Player Fullscreen / Chat
+  const isHiddenScreen =
+    segmentList.includes('create') ||
+    segmentList.includes('create-modal') ||
+    segmentList.includes('create-playlist') ||
+    segmentList.includes('player') ||
+    segmentList.includes('queue') ||
+    segmentList.includes('chat');
 
-  if (!currentTrack || isCreateScreen || isPlayerScreen) return null;
+  if (!currentTrack || isHiddenScreen) return null;
 
   const progressPercent = Math.min(
     100,
@@ -66,10 +70,7 @@ export function MiniPlayer() {
   );
 
   return (
-    <Animated.View
-      entering={reducedMotion ? undefined : FadeInDown.duration(260)}
-      style={styles.container}
-    >
+    <View style={styles.container}>
       <Pressable
         style={styles.inner}
         onPress={() => router.push('/player')}
@@ -177,7 +178,7 @@ export function MiniPlayer() {
           style={[styles.progressBarFill, { width: `${progressPercent}%` }]}
         />
       </View>
-    </Animated.View>
+    </View>
   );
 }
 
@@ -196,6 +197,7 @@ function createStyles(
       backgroundColor: colors.playerBackground,
       borderRadius: Radius.md,
       overflow: 'hidden',
+      zIndex: 50,
       ...Shadows.floating,
     },
     inner: {

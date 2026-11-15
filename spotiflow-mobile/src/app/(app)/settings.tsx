@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MiniPlayer } from '../../components/MiniPlayer';
 import {
   Radius,
   Spacing,
@@ -67,7 +68,7 @@ export default function SettingsScreen() {
         style={styles.container}
         contentContainerStyle={[
           styles.content,
-          { paddingBottom: insets.bottom + 30 },
+          { paddingBottom: Math.max(insets.bottom, 16) + 92 },
         ]}
         showsVerticalScrollIndicator={false}
       >
@@ -260,6 +261,7 @@ export default function SettingsScreen() {
           <Text style={styles.logoutButtonText}>Sair da conta</Text>
         </Pressable>
       </ScrollView>
+      <MiniPlayer />
     </SafeAreaView>
   );
 }

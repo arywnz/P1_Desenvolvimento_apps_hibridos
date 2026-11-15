@@ -2,8 +2,8 @@ import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { Tabs, useRouter } from 'expo-router';
 import { View, type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../../../context/ThemeContext';
 import { MiniPlayer } from '../../../components/MiniPlayer';
+import { useTheme } from '../../../context/ThemeContext';
 
 type TabIconName = SymbolViewProps['name'];
 
@@ -142,7 +142,7 @@ export default function TabsLayout() {
           })}
         />
       </Tabs>
-      <MiniPlayer />
+      <MiniPlayer aboveTabBar />
     </View>
   );
 }

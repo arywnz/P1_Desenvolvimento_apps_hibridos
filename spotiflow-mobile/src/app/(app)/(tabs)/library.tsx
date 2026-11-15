@@ -36,7 +36,7 @@ export default function LibraryScreen() {
   const { width } = useWindowDimensions();
   const { colors, typography } = useTheme();
   const { user } = useAuth();
-  const { playlists: localPlaylists } = useLibrary();
+  const { playlists: localPlaylists, downloadedIds } = useLibrary();
 
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
   const [sortAlphabetical, setSortAlphabetical] = useState(false);
@@ -71,7 +71,7 @@ export default function LibraryScreen() {
         return !apiIds.has(playlist.id);
       }
       if (selectedFilter === 'Baixado') {
-        return Boolean(playlist.isDownloaded);
+        return downloadedIds.includes(playlist.id) || Boolean(playlist.isDownloaded);
       }
       if (selectedFilter === 'Deezer') {
         return apiIds.has(playlist.id);
@@ -83,7 +83,7 @@ export default function LibraryScreen() {
       return [...filtered].sort((a, b) => a.title.localeCompare(b.title, 'pt-BR'));
     }
     return filtered;
-  }, [data?.playlists, mergedPlaylists, selectedFilter, sortAlphabetical]);
+  }, [data?.playlists, downloadedIds, mergedPlaylists, selectedFilter, sortAlphabetical]);
 
   const handleRefresh = async () => {
     setRefreshing(true);

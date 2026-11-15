@@ -3,6 +3,7 @@ import { SymbolView } from 'expo-symbols';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MiniPlayer } from '../../components/MiniPlayer';
 import { USER_PROFILE } from '../../constants/mockData';
 import {
   Radius,
@@ -160,7 +161,7 @@ export default function AccountScreen() {
         style={styles.container}
         contentContainerStyle={[
           styles.content,
-          { paddingBottom: insets.bottom + 30 },
+          { paddingBottom: Math.max(insets.bottom, 16) + 92 },
         ]}
         showsVerticalScrollIndicator={false}
       >
@@ -221,6 +222,7 @@ export default function AccountScreen() {
           <Text style={styles.actionButtonText}>Ouvir recomendação do dia</Text>
         </Pressable>
       </ScrollView>
+      <MiniPlayer />
     </SafeAreaView>
   );
 }

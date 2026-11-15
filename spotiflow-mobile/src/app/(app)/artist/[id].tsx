@@ -17,6 +17,7 @@ import {
   PlayingEqualizer,
   ScalePressable,
 } from '../../../components/AnimatedMotion';
+import { MiniPlayer } from '../../../components/MiniPlayer';
 import { ResourceNotFound } from '../../../components/ResourceNotFound';
 import { StateView } from '../../../components/StateView';
 import { DEFAULT_PLAYLIST_COVER_URL } from '../../../constants/mockData';
@@ -157,6 +158,7 @@ export default function ArtistDetailScreen() {
       togglePlayPause();
     } else {
       playTrack(artistTracks[0], artistTracks);
+      router.push('/player');
     }
   };
 
@@ -191,7 +193,7 @@ export default function ArtistDetailScreen() {
         style={styles.container}
         contentContainerStyle={[
           styles.content,
-          { paddingBottom: insets.bottom + Spacing.xl },
+          { paddingBottom: Math.max(insets.bottom, 16) + 92 },
         ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -306,7 +308,10 @@ export default function ArtistDetailScreen() {
           return (
             <Pressable
               style={styles.trackRow}
-              onPress={() => playTrack(track, artistTracks)}
+              onPress={() => {
+                playTrack(track, artistTracks);
+                router.push('/player');
+              }}
               accessibilityRole="button"
               accessibilityLabel={`Tocar ${track.title}`}
             >
@@ -351,6 +356,7 @@ export default function ArtistDetailScreen() {
           );
         }}
       />
+      <MiniPlayer />
     </SafeAreaView>
   );
 }

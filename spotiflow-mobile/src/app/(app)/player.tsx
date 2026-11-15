@@ -4,8 +4,10 @@ import { SymbolView } from 'expo-symbols';
 import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -160,6 +162,31 @@ export default function PlayerScreen() {
 
         <Pressable
           style={styles.iconButton}
+          onPress={() =>
+            Alert.alert(
+              currentTrack.title,
+              `${currentTrack.artist} • ${currentTrack.album}`,
+              [
+                {
+                  text: 'Ver artista',
+                  onPress: () =>
+                    router.push({
+                      pathname: '/artist/[id]',
+                      params: {
+                        id:
+                          currentTrack.artistId ??
+                          encodeURIComponent(currentTrack.artist),
+                      },
+                    }),
+                },
+                {
+                  text: 'Abrir fila de reprodução',
+                  onPress: () => router.push('/queue'),
+                },
+                { text: 'Fechar', style: 'cancel' },
+              ]
+            )
+          }
           accessibilityRole="button"
           accessibilityLabel="Mais opções"
         >
@@ -279,7 +306,7 @@ export default function PlayerScreen() {
             <View
               style={[
                 styles.progressThumb,
-                { left: `${Math.max(0, progressRatio * 100 - 2)}%` },
+                { left: `${Math.min(96, Math.max(0, progressRatio * 100 - 2))}%` },
               ]}
             />
           </Pressable>
@@ -395,6 +422,12 @@ export default function PlayerScreen() {
         <View style={styles.bottomBarRow}>
           <Pressable
             hitSlop={8}
+            onPress={() =>
+              Alert.alert(
+                'Dispositivos conectados',
+                'Reproduzindo áudio diretamente neste dispositivo.'
+              )
+            }
             accessibilityRole="button"
             accessibilityLabel="Dispositivos conectados"
           >
@@ -413,6 +446,11 @@ export default function PlayerScreen() {
           <View style={styles.bottomBarRight}>
             <Pressable
               hitSlop={8}
+              onPress={() => {
+                void Share.share({
+                  message: `Ouvindo "${currentTrack.title}" de ${currentTrack.artist} no Spotiflow!`,
+                });
+              }}
               accessibilityRole="button"
               accessibilityLabel="Compartilhar música"
             >

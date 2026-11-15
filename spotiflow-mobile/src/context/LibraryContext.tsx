@@ -25,9 +25,11 @@ interface LibraryContextValue {
   playlists: Playlist[];
   allPlaylists: Playlist[];
   savedIds: string[];
+  downloadedIds: string[];
   followedArtists: string[];
   createPlaylist: (input: CreatePlaylistInput) => Playlist;
   toggleSavePlaylist: (playlistId: string) => void;
+  toggleDownloadPlaylist: (playlistId: string) => void;
   toggleFollowArtist: (artistKey: string) => void;
 }
 
@@ -45,6 +47,9 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
     'echos-of-us',
     'my-peace',
   ]);
+  const [downloadedIds, setDownloadedIds] = useState<string[]>(() =>
+    CURATED_PLAYLISTS.filter((p) => p.isDownloaded).map((p) => p.id)
+  );
   const [followedArtists, setFollowedArtists] = useState<string[]>([]);
 
   const allPlaylists = useMemo(
@@ -84,6 +89,14 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const toggleDownloadPlaylist = useCallback((playlistId: string) => {
+    setDownloadedIds((prev) =>
+      prev.includes(playlistId)
+        ? prev.filter((id) => id !== playlistId)
+        : [...prev, playlistId]
+    );
+  }, []);
+
   const toggleFollowArtist = useCallback((artistKey: string) => {
     setFollowedArtists((prev) =>
       prev.includes(artistKey)
@@ -97,18 +110,22 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
       playlists,
       allPlaylists,
       savedIds,
+      downloadedIds,
       followedArtists,
       createPlaylist,
       toggleSavePlaylist,
+      toggleDownloadPlaylist,
       toggleFollowArtist,
     }),
     [
       playlists,
       allPlaylists,
       savedIds,
+      downloadedIds,
       followedArtists,
       createPlaylist,
       toggleSavePlaylist,
+      toggleDownloadPlaylist,
       toggleFollowArtist,
     ]
   );

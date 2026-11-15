@@ -5,6 +5,7 @@ import { useCallback, useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PulsingLiveDot } from '../../components/AnimatedMotion';
+import { MiniPlayer } from '../../components/MiniPlayer';
 import { ResourceNotFound } from '../../components/ResourceNotFound';
 import { StateView } from '../../components/StateView';
 import { FRIENDS_ACTIVITY } from '../../constants/mockData';
@@ -115,7 +116,7 @@ export default function FriendProfileScreen() {
         style={styles.container}
         contentContainerStyle={[
           styles.content,
-          { paddingBottom: insets.bottom + 30 },
+          { paddingBottom: Math.max(insets.bottom, 16) + 92 },
         ]}
         showsVerticalScrollIndicator={false}
       >
@@ -297,6 +298,7 @@ export default function FriendProfileScreen() {
         </View>
         )}
       </ScrollView>
+      <MiniPlayer />
     </SafeAreaView>
   );
 }

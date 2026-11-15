@@ -4,6 +4,7 @@ import { SymbolView } from 'expo-symbols';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MiniPlayer } from '../../components/MiniPlayer';
 import {
   DIRECT_MESSAGES,
   FRIENDS_ACTIVITY,
@@ -66,7 +67,7 @@ export default function ProfileScreen() {
         style={styles.container}
         contentContainerStyle={[
           styles.content,
-          { paddingBottom: insets.bottom + 40 },
+          { paddingBottom: Math.max(insets.bottom, 16) + 92 },
         ]}
         showsVerticalScrollIndicator={false}
       >
@@ -384,12 +385,13 @@ export default function ProfileScreen() {
                   {playlist.title}
                 </Text>
                 <Pressable
-                  onPress={() =>
+                  onPress={(e) => {
+                    e.stopPropagation();
                     router.push({
                       pathname: '/friend-profile',
                       params: { id: friendId },
-                    })
-                  }
+                    });
+                  }}
                   accessibilityRole="button"
                   accessibilityLabel={`Ver perfil de ${friendName}`}
                 >
@@ -507,6 +509,7 @@ export default function ProfileScreen() {
           </View>
         </View>
       </ScrollView>
+      <MiniPlayer />
     </SafeAreaView>
   );
 }

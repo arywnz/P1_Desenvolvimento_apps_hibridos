@@ -102,14 +102,12 @@ export default function CreateModal() {
       setCreatedFeedback(`Iniciando "${option.title}"...`);
       setTimeout(() => {
         setCreatedFeedback(null);
-        router.back();
-        router.push('/queue');
-      }, 600);
+        router.replace('/queue');
+      }, 450);
       return;
     }
 
-    router.back();
-    router.push({
+    router.replace({
       pathname: '/create-playlist',
       params: { mode: option.title },
     });

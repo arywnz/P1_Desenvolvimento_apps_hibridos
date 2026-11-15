@@ -67,6 +67,7 @@ export default function SearchScreen() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [addedTrackId, setAddedTrackId] = useState<string | null>(null);
 
   const requestCounterRef = useRef(0);
   const loadingMoreRef = useRef(false);
@@ -297,10 +298,14 @@ export default function SearchScreen() {
             }
             renderItem={({ item: track }) => {
               const isSelected = currentTrack?.id === track.id;
+              const isQueuedRecently = addedTrackId === track.id;
               return (
                 <Pressable
                   style={styles.trackRow}
-                  onPress={() => playTrack(track, results)}
+                  onPress={() => {
+                    playTrack(track, results);
+                    router.push('/player');
+                  }}
                   accessibilityRole="button"
                   accessibilityLabel={`Tocar ${track.title} de ${track.artist}`}
                 >
@@ -329,7 +334,8 @@ export default function SearchScreen() {
                       </Text>
                     </View>
                     <Pressable
-                      onPress={() =>
+                      onPress={(e) => {
+                        e.stopPropagation();
                         router.push({
                           pathname: '/artist/[id]',
                           params: {
@@ -337,8 +343,8 @@ export default function SearchScreen() {
                               track.artistId ??
                               encodeURIComponent(track.artist),
                           },
-                        })
-                      }
+                        });
+                      }}
                       accessibilityRole="button"
                       accessibilityLabel={`Abrir artista ${track.artist}`}
                     >
@@ -350,18 +356,29 @@ export default function SearchScreen() {
 
                   <Pressable
                     hitSlop={8}
-                    onPress={() => addToQueue(track)}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      addToQueue(track);
+                      setAddedTrackId(track.id);
+                      setTimeout(() => {
+                        setAddedTrackId((prev) =>
+                          prev === track.id ? null : prev
+                        );
+                      }, 1200);
+                    }}
                     accessibilityRole="button"
                     accessibilityLabel={`Adicionar ${track.title} à fila`}
                   >
                     <SymbolView
                       name={{
-                        ios: 'text.badge.plus',
-                        android: 'playlist_add',
-                        web: 'playlist_add',
+                        ios: isQueuedRecently ? 'checkmark' : 'text.badge.plus',
+                        android: isQueuedRecently ? 'check' : 'playlist_add',
+                        web: isQueuedRecently ? 'check' : 'playlist_add',
                       }}
                       size={20}
-                      tintColor={colors.textSecondary}
+                      tintColor={
+                        isQueuedRecently ? colors.primary : colors.textSecondary
+                      }
                       type="hierarchical"
                     />
                   </Pressable>

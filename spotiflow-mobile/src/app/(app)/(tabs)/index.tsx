@@ -231,7 +231,10 @@ export default function HomeScreen() {
                   return (
                     <ScalePressable
                       style={styles.recentCard}
-                      onPress={() => playTrack(track, apiTracks)}
+                      onPress={() => {
+                        playTrack(track, apiTracks);
+                        router.push('/player');
+                      }}
                       accessibilityRole="button"
                       accessibilityLabel={`Tocar ${track.title}`}
                     >
@@ -285,7 +288,10 @@ export default function HomeScreen() {
                 </Text>
                 <ScalePressable
                   style={styles.djButton}
-                  onPress={() => playTrack(featuredTrack, apiTracks)}
+                  onPress={() => {
+                    playTrack(featuredTrack, apiTracks);
+                    router.push('/player');
+                  }}
                   accessibilityRole="button"
                   accessibilityLabel={`Tocar ${featuredTrack.title}`}
                 >

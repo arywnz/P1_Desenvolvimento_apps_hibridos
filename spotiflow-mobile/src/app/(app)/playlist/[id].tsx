@@ -16,6 +16,7 @@ import {
   PlayingEqualizer,
   ScalePressable,
 } from '../../../components/AnimatedMotion';
+import { MiniPlayer } from '../../../components/MiniPlayer';
 import { ResourceNotFound } from '../../../components/ResourceNotFound';
 import { StateView } from '../../../components/StateView';
 import {
@@ -38,15 +39,22 @@ export default function PlaylistDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors, typography } = useTheme();
   const coverSize = Math.min(Math.max(Math.round(width * 0.56), 172), 260);
-  const bottomSpacer = Math.max(insets.bottom, 24) + Spacing.lg;
+  const bottomSpacer = Math.max(insets.bottom, 24) + 92;
   const styles = useMemo(
     () => createStyles(colors, typography, coverSize, bottomSpacer),
     [colors, typography, coverSize, bottomSpacer]
   );
-  const { allPlaylists, savedIds, toggleSavePlaylist } = useLibrary();
+  const {
+    allPlaylists,
+    savedIds,
+    downloadedIds,
+    toggleSavePlaylist,
+    toggleDownloadPlaylist,
+  } = useLibrary();
   const { playTrack, currentTrack, isPlaying, togglePlayPause, addToQueue } =
     usePlayer();
   const [refreshing, setRefreshing] = useState(false);
+  const [addedTrackId, setAddedTrackId] = useState<string | null>(null);
   const forceCuratedRefreshRef = useRef(false);
 
   const localPlaylist = useMemo(
@@ -172,6 +180,8 @@ export default function PlaylistDetailScreen() {
   }
 
   const isSaved = savedIds.includes(playlist.id);
+  const isDownloaded =
+    downloadedIds.includes(playlist.id) || Boolean(playlist.isDownloaded);
   const isCurrentPlaylistPlaying =
     isPlaying && playlist.tracks.some((t) => t.id === currentTrack?.id);
 
@@ -181,6 +191,7 @@ export default function PlaylistDetailScreen() {
         togglePlayPause();
       } else {
         playTrack(playlist.tracks[0], playlist.tracks);
+        router.push('/player');
       }
     }
   };
@@ -270,12 +281,15 @@ export default function PlaylistDetailScreen() {
 
                 <Pressable
                   hitSlop={8}
+                  onPress={() => toggleDownloadPlaylist(playlist.id)}
                   accessibilityRole="button"
-                  accessibilityLabel="Baixar playlist"
+                  accessibilityLabel={
+                    isDownloaded ? 'Remover download da playlist' : 'Baixar playlist'
+                  }
                 >
                   <SymbolView
                     name={{
-                      ios: playlist.isDownloaded
+                      ios: isDownloaded
                         ? 'arrow.down.circle.fill'
                         : 'arrow.down.circle',
                       android: 'download_for_offline',
@@ -283,9 +297,7 @@ export default function PlaylistDetailScreen() {
                     }}
                     size={26}
                     tintColor={
-                      playlist.isDownloaded
-                        ? colors.primary
-                        : colors.textSecondary
+                      isDownloaded ? colors.primary : colors.textSecondary
                     }
                     type="hierarchical"
                   />
@@ -359,6 +371,7 @@ export default function PlaylistDetailScreen() {
         }
         renderItem={({ item: track, index }) => {
           const isThisTrackSelected = currentTrack?.id === track.id;
+          const isQueuedRecently = addedTrackId === track.id;
 
           return (
             <Pressable
@@ -366,7 +379,10 @@ export default function PlaylistDetailScreen() {
                 styles.trackRow,
                 isThisTrackSelected && styles.trackRowSelected,
               ]}
-              onPress={() => playTrack(track, playlist.tracks)}
+              onPress={() => {
+                playTrack(track, playlist.tracks);
+                router.push('/player');
+              }}
               accessibilityRole="button"
               accessibilityLabel={`Tocar ${track.title} de ${track.artist}`}
             >
@@ -406,14 +422,15 @@ export default function PlaylistDetailScreen() {
                   {track.title}
                 </Text>
                 <Pressable
-                  onPress={() =>
+                  onPress={(e) => {
+                    e.stopPropagation();
                     router.push({
                       pathname: '/artist/[id]',
                       params: {
                         id: track.artistId ?? encodeURIComponent(track.artist),
                       },
-                    })
-                  }
+                    });
+                  }}
                   accessibilityRole="button"
                   accessibilityLabel={`Abrir artista ${track.artist}`}
                 >
@@ -428,18 +445,27 @@ export default function PlaylistDetailScreen() {
               <Pressable
                 hitSlop={8}
                 style={styles.trackMoreButton}
-                onPress={() => addToQueue(track)}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  addToQueue(track);
+                  setAddedTrackId(track.id);
+                  setTimeout(() => {
+                    setAddedTrackId((prev) => (prev === track.id ? null : prev));
+                  }, 1200);
+                }}
                 accessibilityRole="button"
                 accessibilityLabel={`Adicionar ${track.title} à fila`}
               >
                 <SymbolView
                   name={{
-                    ios: 'text.badge.plus',
-                    android: 'playlist_add',
-                    web: 'playlist_add',
+                    ios: isQueuedRecently ? 'checkmark' : 'text.badge.plus',
+                    android: isQueuedRecently ? 'check' : 'playlist_add',
+                    web: isQueuedRecently ? 'check' : 'playlist_add',
                   }}
                   size={20}
-                  tintColor={colors.textSecondary}
+                  tintColor={
+                    isQueuedRecently ? colors.primary : colors.textSecondary
+                  }
                   type="hierarchical"
                 />
               </Pressable>
@@ -447,6 +473,7 @@ export default function PlaylistDetailScreen() {
           );
         }}
       />
+      <MiniPlayer />
     </SafeAreaView>
   );
 }
