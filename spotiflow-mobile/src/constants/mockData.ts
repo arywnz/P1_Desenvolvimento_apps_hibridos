@@ -1,4 +1,4 @@
-import type { ImageSourcePropType } from 'react-native';
+import type { ImageProps } from 'expo-image';
 
 /**
  * Dados simulados (mock) para a aplicação Spotiflow
@@ -22,7 +22,7 @@ export interface Playlist {
   subtitle: string;
   author: string;
   coverUrl: string;
-  coverSource?: ImageSourcePropType;
+  coverSource?: ImageProps['source'];
   isMixed?: boolean;
   isPinned?: boolean;
   isDownloaded?: boolean;
@@ -41,7 +41,7 @@ export interface FriendActivity {
   id: string;
   name: string;
   avatarUrl: string;
-  avatarSource?: ImageSourcePropType;
+  avatarSource?: ImageProps['source'];
   currentTrack?: string;
   currentArtist?: string;
   lastActive: string;
@@ -60,7 +60,7 @@ export interface DirectMessage {
   id: string;
   senderName: string;
   avatarUrl: string;
-  avatarSource?: ImageSourcePropType;
+  avatarSource?: ImageProps['source'];
   previewText: string;
   date: string;
   messages: ChatMessage[];
@@ -830,7 +830,7 @@ export interface UserProfileData {
   name: string;
   plan: string;
   avatarUrl: string;
-  avatarSource?: ImageSourcePropType;
+  avatarSource?: ImageProps['source'];
 }
 
 // Usuário logado
