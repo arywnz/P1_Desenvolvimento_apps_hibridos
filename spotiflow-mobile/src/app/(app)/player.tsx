@@ -32,13 +32,17 @@ export default function PlayerScreen() {
     currentTrack,
     isPlaying,
     positionSeconds,
+    isShuffle,
+    isRepeat,
+    nextTrack,
+    previousTrack,
     togglePlayPause,
     toggleLike,
+    toggleShuffle,
+    toggleRepeat,
     seekTo,
   } = usePlayer();
 
-  const [isShuffle, setIsShuffle] = useState(false);
-  const [isRepeat, setIsRepeat] = useState(false);
   const [progressBarWidth, setProgressBarWidth] = useState(0);
 
   const coverSize = Math.min(width - Spacing.lg * 2, 340);
@@ -140,9 +144,20 @@ export default function PlayerScreen() {
             <Text style={styles.trackTitle} numberOfLines={1}>
               {currentTrack.title}
             </Text>
-            <Text style={styles.trackArtist} numberOfLines={1}>
-              {currentTrack.artist}
-            </Text>
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: '/artist/[id]',
+                  params: { id: encodeURIComponent(currentTrack.artist) },
+                })
+              }
+              accessibilityRole="button"
+              accessibilityLabel={`Abrir artista ${currentTrack.artist}`}
+            >
+              <Text style={styles.trackArtist} numberOfLines={1}>
+                {currentTrack.artist}
+              </Text>
+            </Pressable>
           </View>
 
           <Pressable
@@ -201,7 +216,7 @@ export default function PlayerScreen() {
         <View style={styles.playbackControls}>
           <Pressable
             hitSlop={8}
-            onPress={() => setIsShuffle(!isShuffle)}
+            onPress={toggleShuffle}
             accessibilityRole="button"
             accessibilityLabel="Ordem aleatória"
           >
@@ -221,6 +236,7 @@ export default function PlayerScreen() {
 
           <Pressable
             hitSlop={8}
+            onPress={previousTrack}
             accessibilityRole="button"
             accessibilityLabel="Faixa anterior"
           >
@@ -256,6 +272,7 @@ export default function PlayerScreen() {
 
           <Pressable
             hitSlop={8}
+            onPress={nextTrack}
             accessibilityRole="button"
             accessibilityLabel="Próxima faixa"
           >
@@ -273,7 +290,7 @@ export default function PlayerScreen() {
 
           <Pressable
             hitSlop={8}
-            onPress={() => setIsRepeat(!isRepeat)}
+            onPress={toggleRepeat}
             accessibilityRole="button"
             accessibilityLabel="Repetir faixa"
           >
@@ -329,6 +346,7 @@ export default function PlayerScreen() {
 
             <Pressable
               hitSlop={8}
+              onPress={() => router.push('/queue')}
               accessibilityRole="button"
               accessibilityLabel="Fila de reprodução"
             >

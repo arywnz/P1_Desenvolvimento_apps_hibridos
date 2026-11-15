@@ -1,11 +1,10 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ResourceNotFound } from '../../../components/ResourceNotFound';
-import { FRIENDS_ACTIVITY, MOCK_PLAYLISTS } from '../../../constants/mockData';
 import {
   Radius,
   Shadows,
@@ -13,6 +12,7 @@ import {
   type ThemeColors,
   type ThemeTypography,
 } from '../../../constants/theme';
+import { useLibrary } from '../../../context/LibraryContext';
 import { usePlayer } from '../../../context/PlayerContext';
 import { useTheme } from '../../../context/ThemeContext';
 
@@ -24,14 +24,8 @@ export default function PlaylistDetailScreen() {
     () => createStyles(colors, typography),
     [colors, typography]
   );
+  const { allPlaylists, savedIds, toggleSavePlaylist } = useLibrary();
   const { playTrack, currentTrack, isPlaying, togglePlayPause } = usePlayer();
-  const [isSaved, setIsSaved] = useState(false);
-
-  // Junta todas as playlists (do usuário e dos amigos) para achar pelo ID
-  const allPlaylists = [
-    ...MOCK_PLAYLISTS,
-    ...FRIENDS_ACTIVITY.flatMap((f) => f.playlists),
-  ];
 
   const playlist = allPlaylists.find((p) => p.id === id);
 
@@ -44,6 +38,8 @@ export default function PlaylistDetailScreen() {
     );
   }
 
+  const isSaved = savedIds.includes(playlist.id);
+
   const isCurrentPlaylistPlaying =
     isPlaying && playlist.tracks.some((t) => t.id === currentTrack?.id);
 
@@ -52,7 +48,7 @@ export default function PlaylistDetailScreen() {
       if (playlist.tracks.some((t) => t.id === currentTrack?.id)) {
         togglePlayPause();
       } else {
-        playTrack(playlist.tracks[0]);
+        playTrack(playlist.tracks[0], playlist.tracks);
       }
     }
   };
@@ -109,7 +105,7 @@ export default function PlaylistDetailScreen() {
           <View style={styles.leftActions}>
             <Pressable
               hitSlop={8}
-              onPress={() => setIsSaved(!isSaved)}
+              onPress={() => toggleSavePlaylist(playlist.id)}
               accessibilityRole="button"
               accessibilityLabel={
                 isSaved ? 'Remover da biblioteca' : 'Adicionar a biblioteca'
@@ -204,7 +200,7 @@ export default function PlaylistDetailScreen() {
                   styles.trackRow,
                   isThisTrackSelected && styles.trackRowSelected,
                 ]}
-                onPress={() => playTrack(track)}
+                onPress={() => playTrack(track, playlist.tracks)}
                 accessibilityRole="button"
                 accessibilityLabel={`Tocar ${track.title} de ${track.artist}`}
               >

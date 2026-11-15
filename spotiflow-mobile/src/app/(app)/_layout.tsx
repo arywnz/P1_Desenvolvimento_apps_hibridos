@@ -6,12 +6,12 @@ export default function AppLayout() {
   const { user, isReady } = useAuth();
   const { colors } = useTheme();
 
-  // Aguarda hidratacao (Aula 10 usara SplashScreen + AsyncStorage/SecureStore)
+  // Aguarda hidratação (Aula 10 usará SplashScreen + AsyncStorage/SecureStore)
   if (!isReady) {
     return null;
   }
 
-  // Guarda de rota da Aula 8: usuarios nao autenticados voltam para o login
+  // Guarda de rota da Aula 8: usuários não autenticados voltam para o login
   if (!user) {
     return <Redirect href="/login" />;
   }
@@ -35,6 +35,22 @@ export default function AppLayout() {
         }}
       />
       <Stack.Screen
+        name="create-playlist"
+        options={{
+          presentation: 'modal',
+          animation: 'slide_from_bottom',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="queue"
+        options={{
+          presentation: 'modal',
+          animation: 'slide_from_bottom',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
         name="player"
         options={{
           presentation: 'modal',
@@ -44,6 +60,13 @@ export default function AppLayout() {
       />
       <Stack.Screen
         name="playlist/[id]"
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="artist/[id]"
         options={{
           headerShown: false,
           animation: 'slide_from_right',

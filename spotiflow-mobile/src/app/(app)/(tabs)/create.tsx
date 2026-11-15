@@ -84,11 +84,19 @@ export default function CreateScreen() {
   const [createdFeedback, setCreatedFeedback] = useState<string | null>(null);
 
   const handleSelectOption = (option: CreateOption) => {
-    setCreatedFeedback(`Criando "${option.title}"...`);
-    setTimeout(() => {
-      setCreatedFeedback(null);
-      router.push('/library');
-    }, 900);
+    if (option.id === 'jam') {
+      setCreatedFeedback(`Iniciando "${option.title}"...`);
+      setTimeout(() => {
+        setCreatedFeedback(null);
+        router.push('/queue');
+      }, 600);
+      return;
+    }
+
+    router.push({
+      pathname: '/create-playlist',
+      params: { mode: option.title },
+    });
   };
 
   return (

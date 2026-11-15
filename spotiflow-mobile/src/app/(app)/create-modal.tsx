@@ -91,12 +91,21 @@ export default function CreateModal() {
   const [createdFeedback, setCreatedFeedback] = useState<string | null>(null);
 
   const handleSelectOption = (option: CreateOption) => {
-    setCreatedFeedback(`Criando "${option.title}"...`);
-    setTimeout(() => {
-      setCreatedFeedback(null);
-      router.back();
-      router.push('/library');
-    }, 800);
+    if (option.id === 'jam') {
+      setCreatedFeedback(`Iniciando "${option.title}"...`);
+      setTimeout(() => {
+        setCreatedFeedback(null);
+        router.back();
+        router.push('/queue');
+      }, 600);
+      return;
+    }
+
+    router.back();
+    router.push({
+      pathname: '/create-playlist',
+      params: { mode: option.title },
+    });
   };
 
   return (
