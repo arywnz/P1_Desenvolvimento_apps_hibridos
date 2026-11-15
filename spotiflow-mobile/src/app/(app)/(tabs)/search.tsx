@@ -53,7 +53,7 @@ export default function SearchScreen() {
   const debouncedQuery = useDebounce(searchQuery.trim(), 450);
 
   const fetchFeatured = useCallback(() => api.getChart(6), []);
-  const { data: featuredChart } = useFetch(fetchFeatured);
+  const { data: featuredChart } = useFetch(fetchFeatured, { cacheKey: 'chart:6' });
   const featuredPlaylists = useMemo(
     () => [...playlists, ...(featuredChart?.playlists ?? [])],
     [featuredChart?.playlists, playlists]

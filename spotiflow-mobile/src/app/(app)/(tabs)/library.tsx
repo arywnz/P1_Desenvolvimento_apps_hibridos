@@ -55,7 +55,7 @@ export default function LibraryScreen() {
   );
 
   const fetchChart = useCallback(() => api.getChart(10), []);
-  const { data, loading, error, reload } = useFetch(fetchChart);
+  const { data, loading, error, reload } = useFetch(fetchChart, { cacheKey: 'chart:10' });
 
   const mergedPlaylists = useMemo<Playlist[]>(() => {
     const apiPlaylists = data?.playlists ?? [];

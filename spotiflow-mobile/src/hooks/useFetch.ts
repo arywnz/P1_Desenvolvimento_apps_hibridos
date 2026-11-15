@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { comCache } from '../services/cache';
 
 interface UseFetchOptions {
   enabled?: boolean;
+  cacheKey?: string;
+  ttlMs?: number;
 }
 
 export interface UseFetchResult<T> {
@@ -19,12 +22,14 @@ export function useFetch<T>(
   options?: UseFetchOptions
 ): UseFetchResult<T> {
   const enabled = options?.enabled ?? true;
+  const cacheKey = options?.cacheKey;
+  const ttlMs = options?.ttlMs ?? 300_000;
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState<boolean>(enabled);
   const [error, setError] = useState<string | null>(null);
   const requestIdRef = useRef(0);
 
-  const execute = useCallback(async () => {
+  const execute = useCallback(async (force = false) => {
     if (!enabled) {
       setLoading(false);
       return;
@@ -35,7 +40,14 @@ export function useFetch<T>(
     setError(null);
 
     try {
-      const result = await fetcher();
+      const result = cacheKey
+        ? await comCache(cacheKey, fetcher, ttlMs, {
+            force,
+            onUpdate: fresh => {
+              if (requestId === requestIdRef.current) setData(fresh);
+            },
+          })
+        : await fetcher();
       if (requestId === requestIdRef.current) {
         setData(result);
       }
@@ -52,7 +64,7 @@ export function useFetch<T>(
         setLoading(false);
       }
     }
-  }, [enabled, fetcher]);
+  }, [enabled, fetcher, cacheKey, ttlMs]);
 
   useEffect(() => {
     let active = true;
@@ -71,5 +83,6 @@ export function useFetch<T>(
     };
   }, [execute]);
 
-  return { data, loading, error, reload: execute };
+  const reload = useCallback(() => execute(true), [execute]);
+  return { data, loading, error, reload };
 }

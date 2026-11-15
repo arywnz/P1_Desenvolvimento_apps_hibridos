@@ -1,0 +1,21 @@
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const { load } = require('./persistence.cjs');
+test('cache: fresco, expirado, offline e recuperacao', async () => {
+  const data = new Map();
+  const storage = { get: async k => data.get(k), set: async (k,v) => data.set(k,v) };
+  const { comCache } = load('src/services/cache.ts', { './storage': { storage } });
+  let count = 0;
+  const fetcher = async () => ++count;
+  assert.equal(await comCache('a', fetcher, 10000), 1);
+  assert.equal(await comCache('a', fetcher, 10000), 1);
+  assert.equal(count, 1);
+  data.get('cache:a').savedAt = 0;
+  let updated;
+  assert.equal(await comCache('a', fetcher, 10000, { onUpdate: v => { updated = v; } }), 1);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(updated, 2);
+  assert.equal(await comCache('a', async () => { throw Error('offline'); }, 0), 2);
+  await new Promise(resolve => setImmediate(resolve));
+  await assert.rejects(comCache('missing', async () => { throw Error('offline'); }, 0));
+});

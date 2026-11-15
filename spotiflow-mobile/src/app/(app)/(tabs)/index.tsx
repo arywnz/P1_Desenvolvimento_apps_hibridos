@@ -56,7 +56,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchChart = useCallback(() => api.getChart(12), []);
-  const { data, loading, error, reload } = useFetch(fetchChart);
+  const { data, loading, error, reload } = useFetch(fetchChart, { cacheKey: 'chart:12' });
 
   const shortcutColumns = width >= 680 ? 3 : 2;
   const shortcutWidth = Math.floor(
