@@ -29,6 +29,7 @@ export interface Playlist {
   isDownloaded?: boolean;
   tracksCount: number;
   tracks: Track[];
+  trackQueries?: string[];
 }
 
 export interface ArtistProfile {

@@ -12,7 +12,10 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { CURRENT_TRACK, MOCK_PLAYLISTS, type Track } from '../constants/mockData';
+import { INITIAL_TRACK_QUERY } from '../constants/mockData';
+import { api } from '../services/api';
+import type { Track } from '../types/music';
+import { useAuth } from './AuthContext';
 
 interface PlayerContextType {
   currentTrack: Track | null;
@@ -35,20 +38,15 @@ interface PlayerContextType {
   toggleShuffle: () => void;
   toggleRepeat: () => void;
   seekTo: (seconds: number) => void;
+  stopPlayback: () => void;
 }
-
-const DEFAULT_QUEUE: Track[] = MOCK_PLAYLISTS[0]?.tracks.length
-  ? MOCK_PLAYLISTS[0].tracks
-  : [CURRENT_TRACK];
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
 
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
-  const [currentTrack, setCurrentTrack] = useState<Track | null>(CURRENT_TRACK);
-  const [queue, setQueue] = useState<Track[]>(DEFAULT_QUEUE);
-  const [fallbackIsPlaying, setFallbackIsPlaying] = useState<boolean>(false);
-  const [fallbackPositionSeconds, setFallbackPositionSeconds] =
-    useState<number>(0);
+  const { user } = useAuth();
+  const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
+  const [queue, setQueue] = useState<Track[]>([]);
   const [isShuffle, setIsShuffle] = useState<boolean>(false);
   const [isRepeat, setIsRepeat] = useState<boolean>(false);
 
@@ -57,6 +55,28 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
   const finishHandledRef = useRef<boolean>(false);
   const nextTrackRef = useRef<() => void>(() => {});
+  const hasSelectedTrackRef = useRef<boolean>(false);
+  const userRef = useRef(user);
+
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+
+  const stopPlayback = useCallback(() => {
+    hasSelectedTrackRef.current = false;
+    finishHandledRef.current = false;
+    try {
+      player.pause();
+      player.clearLockScreenControls();
+      player.replace(null);
+    } catch {
+      // Ignora erro caso o player ainda não tenha fonte ativa
+    }
+    void Promise.resolve().then(() => {
+      setCurrentTrack(null);
+      setQueue([]);
+    });
+  }, [player]);
 
   useEffect(() => {
     void setAudioModeAsync({
@@ -66,12 +86,52 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     }).catch(() => {});
   }, []);
 
+  // Carrega "Exagerado" + fila inicial real da Deezer (em pausa) com prévia de áudio garantida
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+
+    const preloadInitialQueue = async () => {
+      try {
+        const [initialMatch, chart] = await Promise.all([
+          api.resolveTrackByQuery(INITIAL_TRACK_QUERY).catch(() => null),
+          api.getChart(10).catch(() => null),
+        ]);
+        const playableChart = (chart?.tracks ?? []).filter((track) =>
+          Boolean(track.previewUrl)
+        );
+        const initialQueue = initialMatch?.previewUrl
+          ? [
+              initialMatch,
+              ...playableChart.filter((track) => track.id !== initialMatch.id),
+            ]
+          : playableChart;
+
+        if (!cancelled && !hasSelectedTrackRef.current && initialQueue.length > 0) {
+          setCurrentTrack(initialQueue[0]);
+          setQueue(initialQueue);
+          player.replace(initialQueue[0].previewUrl ?? null);
+        }
+      } catch {
+        // Sem conexão no boot; o usuário ainda pode tocar assim que carregar qualquer lista
+      }
+    };
+
+    if (!hasSelectedTrackRef.current) {
+      void preloadInitialQueue();
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [player, user]);
+
   const loadAndPlayTrack = useCallback(
     (track: Track) => {
+      if (!userRef.current) return;
+      hasSelectedTrackRef.current = true;
       finishHandledRef.current = false;
       setCurrentTrack(track);
-      setFallbackPositionSeconds(0);
-      setFallbackIsPlaying(false);
 
       if (track.previewUrl) {
         player.replace(track.previewUrl);
@@ -86,6 +146,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
   const playTrack = useCallback(
     (track: Track, list?: Track[]) => {
+      if (!userRef.current) return;
       loadAndPlayTrack(track);
       if (list && list.length > 0) {
         setQueue(list);
@@ -99,7 +160,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   );
 
   const nextTrack = useCallback(() => {
-    if (!currentTrack || queue.length === 0) return;
+    if (!userRef.current || !currentTrack || queue.length === 0) return;
 
     if (isRepeat) {
       finishHandledRef.current = false;
@@ -107,9 +168,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         void player.seekTo(0).then(() => {
           player.play();
         });
-      } else {
-        setFallbackPositionSeconds(0);
-        setFallbackIsPlaying(true);
       }
       return;
     }
@@ -128,15 +186,13 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   }, [currentTrack, isRepeat, isShuffle, loadAndPlayTrack, player, queue]);
 
   const hasPreview = Boolean(currentTrack?.previewUrl);
-  const positionSeconds = hasPreview
-    ? status.currentTime
-    : fallbackPositionSeconds;
+  const positionSeconds = hasPreview ? status.currentTime : 0;
   const durationSeconds = hasPreview
     ? status.duration > 0
       ? status.duration
       : 30
     : currentTrack?.durationSeconds || 0;
-  const isPlaying = hasPreview ? status.playing : fallbackIsPlaying;
+  const isPlaying = hasPreview ? status.playing : false;
   const isBuffering = hasPreview
     ? status.isBuffering || (status.playing && !status.isLoaded)
     : false;
@@ -145,12 +201,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const previousTrack = useCallback(() => {
     if (!currentTrack || queue.length === 0) return;
 
-    if (positionSeconds > 3) {
-      if (currentTrack.previewUrl) {
-        void player.seekTo(0);
-      } else {
-        setFallbackPositionSeconds(0);
-      }
+    if (positionSeconds > 3 && currentTrack.previewUrl) {
+      void player.seekTo(0);
       return;
     }
 
@@ -171,26 +223,21 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const togglePlayPause = useCallback(() => {
-    if (!currentTrack) return;
+    if (!userRef.current || !currentTrack?.previewUrl) return;
 
-    if (currentTrack.previewUrl) {
-      if (status.playing) {
-        player.pause();
-      } else if (
-        status.didJustFinish ||
-        (status.duration > 0 && status.currentTime >= status.duration)
-      ) {
-        finishHandledRef.current = false;
-        void player.seekTo(0).then(() => {
-          player.play();
-        });
-      } else {
+    if (status.playing) {
+      player.pause();
+    } else if (
+      status.didJustFinish ||
+      (status.duration > 0 && status.currentTime >= status.duration)
+    ) {
+      finishHandledRef.current = false;
+      void player.seekTo(0).then(() => {
         player.play();
-      }
-      return;
+      });
+    } else {
+      player.play();
     }
-
-    setFallbackIsPlaying((prev) => !prev);
   }, [
     currentTrack,
     player,
@@ -201,10 +248,17 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   ]);
 
   const toggleLike = useCallback(() => {
+    if (!currentTrack) return;
+    const nextLiked = !currentTrack.liked;
     setCurrentTrack((prev) =>
-      prev ? { ...prev, liked: !prev.liked } : prev
+      prev && prev.id === currentTrack.id ? { ...prev, liked: nextLiked } : prev
     );
-  }, []);
+    setQueue((queueItems) =>
+      queueItems.map((item) =>
+        item.id === currentTrack.id ? { ...item, liked: nextLiked } : item
+      )
+    );
+  }, [currentTrack]);
 
   const toggleShuffle = useCallback(() => {
     setIsShuffle((prev) => !prev);
@@ -216,13 +270,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
   const seekTo = useCallback(
     (seconds: number) => {
-      if (!currentTrack) return;
+      if (!currentTrack?.previewUrl) return;
       const clampedSeconds = Math.max(0, seconds);
-      if (currentTrack.previewUrl) {
-        void player.seekTo(clampedSeconds);
-      } else {
-        setFallbackPositionSeconds(clampedSeconds);
-      }
+      void player.seekTo(clampedSeconds);
     },
     [currentTrack, player]
   );
@@ -230,6 +280,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     nextTrackRef.current = nextTrack;
   }, [nextTrack]);
+
+  useEffect(() => {
+    if (!user) {
+      stopPlayback();
+    }
+  }, [stopPlayback, user]);
 
   useEffect(() => {
     const subscription = player.addListener(
@@ -273,6 +329,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       toggleShuffle,
       toggleRepeat,
       seekTo,
+      stopPlayback,
     }),
     [
       currentTrack,
@@ -295,6 +352,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       toggleShuffle,
       toggleRepeat,
       seekTo,
+      stopPlayback,
     ]
   );
 

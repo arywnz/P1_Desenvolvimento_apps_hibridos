@@ -8,7 +8,13 @@ import {
   Text,
   View,
 } from 'react-native';
+import Animated, {
+  Easing,
+  SlideInDown,
+  useReducedMotion,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScalePressable } from '../../components/AnimatedMotion';
 import {
   Radius,
   Shadows,
@@ -83,6 +89,7 @@ const CREATE_OPTIONS: CreateOption[] = [
 export default function CreateModal() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const reducedMotion = useReducedMotion();
   const { colors, typography } = useTheme();
   const styles = useMemo(
     () => createStyles(colors, typography),
@@ -119,7 +126,12 @@ export default function CreateModal() {
       />
 
       {/* Folha do BottomSheet que encosta até a borda inferior real da tela */}
-      <View
+      <Animated.View
+        entering={
+          reducedMotion
+            ? undefined
+            : SlideInDown.duration(200).easing(Easing.out(Easing.cubic))
+        }
         style={[
           styles.sheetContainer,
           { paddingBottom: Math.max(insets.bottom, 16) + 12 },
@@ -131,7 +143,7 @@ export default function CreateModal() {
           bounces={false}
         >
           {CREATE_OPTIONS.map((option) => (
-            <Pressable
+            <ScalePressable
               key={option.id}
               style={styles.optionRow}
               onPress={() => handleSelectOption(option)}
@@ -160,7 +172,7 @@ export default function CreateModal() {
                   {option.subtitle}
                 </Text>
               </View>
-            </Pressable>
+            </ScalePressable>
           ))}
         </ScrollView>
 
@@ -173,7 +185,7 @@ export default function CreateModal() {
 
         {/* Botão de Fechar redondo no canto inferior direito */}
         <View style={styles.bottomBar}>
-          <Pressable
+          <ScalePressable
             style={styles.closeButton}
             onPress={() => router.back()}
             accessibilityRole="button"
@@ -189,9 +201,9 @@ export default function CreateModal() {
               tintColor={colors.closeButtonIcon}
               type="hierarchical"
             />
-          </Pressable>
+          </ScalePressable>
         </View>
-      </View>
+      </Animated.View>
     </View>
   );
 }
@@ -212,6 +224,9 @@ function createStyles(colors: ThemeColors, typography: ThemeTypography) {
       borderTopRightRadius: Radius.xl,
       paddingTop: Spacing.lg,
       paddingHorizontal: Spacing.md,
+      width: '100%',
+      maxWidth: 540,
+      alignSelf: 'center',
     },
     sheetContent: {
       gap: Spacing.sm,

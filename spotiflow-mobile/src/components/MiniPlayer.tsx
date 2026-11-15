@@ -8,9 +8,12 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
+import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PlayingEqualizer } from './AnimatedMotion';
 import {
   Radius,
   Shadows,
@@ -25,6 +28,8 @@ export function MiniPlayer() {
   const router = useRouter();
   const segments = useSegments();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const reducedMotion = useReducedMotion();
   const { colors, typography } = useTheme();
   const {
     currentTrack,
@@ -41,9 +46,11 @@ export function MiniPlayer() {
   const bottomOffset =
     tabBarHeight + (Platform.select({ ios: 4, android: 6, default: 4 }) ?? 4);
 
+  const horizontalMargin = width > 680 ? Math.floor((width - 640) / 2) : Spacing.sm;
+
   const styles = useMemo(
-    () => createStyles(colors, typography, bottomOffset),
-    [colors, typography, bottomOffset]
+    () => createStyles(colors, typography, bottomOffset, horizontalMargin),
+    [colors, typography, bottomOffset, horizontalMargin]
   );
 
   // Esconder o mini player na tela de Criar (Bottom Sheet) e no Player Fullscreen
@@ -59,7 +66,10 @@ export function MiniPlayer() {
   );
 
   return (
-    <View style={styles.container}>
+    <Animated.View
+      entering={reducedMotion ? undefined : FadeInDown.duration(260)}
+      style={styles.container}
+    >
       <Pressable
         style={styles.inner}
         onPress={() => router.push('/player')}
@@ -73,11 +83,20 @@ export function MiniPlayer() {
         />
 
         <View style={styles.info}>
-          <Text style={styles.title} numberOfLines={1}>
-            {currentTrack.title}
-          </Text>
+          <View style={styles.titleRow}>
+            {hasPreview && isPlaying && (
+              <PlayingEqualizer
+                isPlaying={isPlaying}
+                color={colors.primary}
+                size={12}
+              />
+            )}
+            <Text style={styles.title} numberOfLines={1}>
+              {currentTrack.title}
+            </Text>
+          </View>
           <Text style={styles.artist} numberOfLines={1}>
-            {hasPreview ? currentTrack.artist : `${currentTrack.artist} • Sem prévia`}
+            {currentTrack.artist}
           </Text>
         </View>
 
@@ -86,15 +105,16 @@ export function MiniPlayer() {
             hitSlop={8}
             onPress={(e) => {
               e.stopPropagation();
+              router.push('/queue');
             }}
             accessibilityRole="button"
-            accessibilityLabel="Dispositivos conectados"
+            accessibilityLabel="Abrir fila de reprodução"
           >
             <SymbolView
               name={{
-                ios: 'hifispeaker.fill',
-                android: 'speaker_group',
-                web: 'speaker_group',
+                ios: 'list.bullet',
+                android: 'queue_music',
+                web: 'queue_music',
               }}
               size={20}
               tintColor={colors.playerTextSecondary}
@@ -157,21 +177,22 @@ export function MiniPlayer() {
           style={[styles.progressBarFill, { width: `${progressPercent}%` }]}
         />
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
 function createStyles(
   colors: ThemeColors,
   typography: ThemeTypography,
-  bottomOffset: number
+  bottomOffset: number,
+  horizontalMargin: number
 ) {
   return StyleSheet.create({
     container: {
       position: 'absolute',
       bottom: bottomOffset,
-      left: Spacing.sm,
-      right: Spacing.sm,
+      left: horizontalMargin,
+      right: horizontalMargin,
       backgroundColor: colors.playerBackground,
       borderRadius: Radius.md,
       overflow: 'hidden',
@@ -193,13 +214,20 @@ function createStyles(
     info: {
       flex: 1,
       marginLeft: Spacing.sm,
+      marginRight: Spacing.sm,
       justifyContent: 'center',
+    },
+    titleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
     },
     title: {
       ...typography.bodyMedium,
       color: colors.playerTextPrimary,
       fontWeight: '700',
       fontSize: 13,
+      flexShrink: 1,
     },
     artist: {
       ...typography.bodySmall,

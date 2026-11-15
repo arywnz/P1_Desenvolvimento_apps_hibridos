@@ -15,6 +15,11 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
+  PlayingEqualizer,
+  ScalePressable,
+} from '../../components/AnimatedMotion';
+import { StateView } from '../../components/StateView';
+import {
   Radius,
   Shadows,
   Spacing,
@@ -27,7 +32,7 @@ import { useTheme } from '../../context/ThemeContext';
 export default function PlayerScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const { colors, typography } = useTheme();
   const {
     currentTrack,
@@ -50,13 +55,53 @@ export default function PlayerScreen() {
 
   const [progressBarWidth, setProgressBarWidth] = useState(0);
 
-  const coverSize = Math.min(width - Spacing.lg * 2, 340);
+  const maxContentWidth = Math.min(width, 520);
+  const coverSize = Math.min(
+    maxContentWidth - Spacing.lg * 2,
+    Math.max(Math.round(height * 0.39), 210),
+    340
+  );
   const styles = useMemo(
     () => createStyles(colors, typography, coverSize),
     [colors, typography, coverSize]
   );
 
-  if (!currentTrack) return null;
+  if (!currentTrack) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.topHeader}>
+          <Pressable
+            style={styles.iconButton}
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Minimizar player"
+          >
+            <SymbolView
+              name={{
+                ios: 'chevron.down',
+                android: 'keyboard_arrow_down',
+                web: 'keyboard_arrow_down',
+              }}
+              size={28}
+              tintColor={colors.playerTextPrimary}
+              type="hierarchical"
+            />
+          </Pressable>
+        </View>
+        <StateView
+          loading={false}
+          error={null}
+          isEmpty
+          emptyTitle="Nenhuma música em reprodução"
+          emptyDescription="Escolha uma faixa na tela Início ou Buscar para ouvir a prévia de áudio."
+          onRetry={() => router.replace('/')}
+          retryLabel="Explorar músicas"
+        >
+          {null}
+        </StateView>
+      </SafeAreaView>
+    );
+  }
 
   const totalSeconds = hasPreview
     ? durationSeconds || 30
@@ -198,11 +243,18 @@ export default function PlayerScreen() {
         </View>
 
         <View style={styles.audioStatusRow}>
+          {hasPreview && isPlaying && !isBuffering && !audioError && (
+            <PlayingEqualizer
+              isPlaying={isPlaying}
+              color={colors.primary}
+              size={12}
+            />
+          )}
           <Text style={styles.audioStatusText}>
             {audioError
               ? `Erro ao reproduzir prévia: ${audioError}`
               : !hasPreview
-                ? 'Faixa demonstrativa local sem áudio — toque numa música da Deezer'
+                ? 'Prévia de áudio indisponível para esta faixa'
                 : isBuffering
                   ? 'Carregando prévia de áudio...'
                   : 'Prévia de 30s • Deezer'}
@@ -280,7 +332,7 @@ export default function PlayerScreen() {
             />
           </Pressable>
 
-          <Pressable
+          <ScalePressable
             style={styles.mainPlayButton}
             onPress={togglePlayPause}
             accessibilityRole="button"
@@ -300,7 +352,7 @@ export default function PlayerScreen() {
                 type="hierarchical"
               />
             )}
-          </Pressable>
+          </ScalePressable>
 
           <Pressable
             hitSlop={8}
@@ -443,7 +495,10 @@ function createStyles(
     },
     content: {
       paddingHorizontal: Spacing.lg,
-      paddingTop: Spacing.md,
+      paddingTop: Spacing.sm,
+      width: '100%',
+      maxWidth: 520,
+      alignSelf: 'center',
       justifyContent: 'space-between',
     },
     coverContainer: {
@@ -464,6 +519,9 @@ function createStyles(
       marginBottom: Spacing.sm,
     },
     audioStatusRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
       marginBottom: Spacing.md,
     },
     audioStatusText: {

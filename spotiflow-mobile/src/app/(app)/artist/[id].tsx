@@ -9,12 +9,18 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  PlayingEqualizer,
+  ScalePressable,
+} from '../../../components/AnimatedMotion';
 import { ResourceNotFound } from '../../../components/ResourceNotFound';
 import { StateView } from '../../../components/StateView';
-import { CURRENT_TRACK, type Track } from '../../../constants/mockData';
+import { DEFAULT_PLAYLIST_COVER_URL } from '../../../constants/mockData';
+import type { Track } from '../../../types/music';
 import {
   Radius,
   Shadows,
@@ -31,11 +37,13 @@ import { api } from '../../../services/api';
 export default function ArtistDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors, typography } = useTheme();
+  const avatarSize = Math.min(Math.max(Math.round(width * 0.34), 112), 156);
   const styles = useMemo(
-    () => createStyles(colors, typography),
-    [colors, typography]
+    () => createStyles(colors, typography, avatarSize),
+    [colors, typography, avatarSize]
   );
   const { allPlaylists, followedArtists, toggleFollowArtist } = useLibrary();
   const { playTrack, currentTrack, isPlaying, togglePlayPause } = usePlayer();
@@ -57,7 +65,6 @@ export default function ArtistDetailScreen() {
   const localTracks: Track[] = useMemo(() => {
     if (isNumericId) return [];
     const map = new Map<string, Track>();
-    map.set(CURRENT_TRACK.id, CURRENT_TRACK);
     for (const playlist of allPlaylists) {
       for (const track of playlist.tracks) {
         if (!map.has(track.id)) {
@@ -73,7 +80,7 @@ export default function ArtistDetailScreen() {
   const artistName = remoteArtist?.name ?? localTracks[0]?.artist ?? '';
   const artistTracks = remoteArtist?.topTracks ?? localTracks;
   const coverUrl =
-    remoteArtist?.pictureUrl || localTracks[0]?.coverUrl || CURRENT_TRACK.coverUrl;
+    remoteArtist?.pictureUrl || localTracks[0]?.coverUrl || DEFAULT_PLAYLIST_COVER_URL;
   const followKey = isNumericId ? rawId : normalizedTarget;
 
   const relatedPlaylists = useMemo(() => {
@@ -235,7 +242,7 @@ export default function ArtistDetailScreen() {
                   </Text>
                 </Pressable>
 
-                <Pressable
+                <ScalePressable
                   style={styles.playButton}
                   onPress={handlePlayArtist}
                   accessibilityRole="button"
@@ -251,7 +258,7 @@ export default function ArtistDetailScreen() {
                     tintColor={colors.onPrimary}
                     type="hierarchical"
                   />
-                </Pressable>
+                </ScalePressable>
               </View>
             </View>
 
@@ -303,14 +310,24 @@ export default function ArtistDetailScreen() {
               accessibilityRole="button"
               accessibilityLabel={`Tocar ${track.title}`}
             >
-              <Text
-                style={[
-                  styles.trackIndex,
-                  isSelected && styles.trackTitleActive,
-                ]}
-              >
-                {index + 1}
-              </Text>
+              {isSelected && isPlaying ? (
+                <View style={styles.trackIndexEq}>
+                  <PlayingEqualizer
+                    isPlaying={isPlaying}
+                    color={colors.primary}
+                    size={12}
+                  />
+                </View>
+              ) : (
+                <Text
+                  style={[
+                    styles.trackIndex,
+                    isSelected && styles.trackTitleActive,
+                  ]}
+                >
+                  {index + 1}
+                </Text>
+              )}
               <Image
                 source={{ uri: track.coverUrl }}
                 style={styles.trackCover}
@@ -338,7 +355,11 @@ export default function ArtistDetailScreen() {
   );
 }
 
-function createStyles(colors: ThemeColors, typography: ThemeTypography) {
+function createStyles(
+  colors: ThemeColors,
+  typography: ThemeTypography,
+  avatarSize: number
+) {
   return StyleSheet.create({
     safeArea: {
       flex: 1,
@@ -370,6 +391,9 @@ function createStyles(colors: ThemeColors, typography: ThemeTypography) {
     content: {
       padding: Spacing.lg,
       gap: Spacing.xs,
+      width: '100%',
+      maxWidth: 640,
+      alignSelf: 'center',
     },
     heroCard: {
       alignItems: 'center',
@@ -377,8 +401,8 @@ function createStyles(colors: ThemeColors, typography: ThemeTypography) {
       paddingVertical: Spacing.md,
     },
     artistAvatar: {
-      width: 140,
-      height: 140,
+      width: avatarSize,
+      height: avatarSize,
       borderRadius: Radius.pill,
       ...Shadows.floating,
     },
@@ -450,6 +474,11 @@ function createStyles(colors: ThemeColors, typography: ThemeTypography) {
       color: colors.textSecondary,
       fontWeight: '700',
       textAlign: 'center',
+    },
+    trackIndexEq: {
+      width: 22,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     trackCover: {
       width: 46,

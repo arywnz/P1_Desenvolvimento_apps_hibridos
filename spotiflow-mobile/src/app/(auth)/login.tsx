@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { FadeInSection } from '../../components/AnimatedMotion';
 import {
   Radius,
   Shadows,
@@ -95,7 +96,7 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.brandBlock}>
+          <FadeInSection delay={30} style={styles.brandBlock}>
             <View style={styles.logoCircle}>
               <SymbolView
                 name={{
@@ -113,9 +114,9 @@ export default function LoginScreen() {
               Entre para ouvir suas playlists, explorar lançamentos e acompanhar
               amigos.
             </Text>
-          </View>
+          </FadeInSection>
 
-          <View style={styles.formCard}>
+          <FadeInSection delay={100} style={styles.formCard}>
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>Usuário (API DummyJSON)</Text>
               <TextInput
@@ -238,7 +239,7 @@ export default function LoginScreen() {
                 Entrar em modo demonstração (sem rede)
               </Text>
             </Pressable>
-          </View>
+          </FadeInSection>
 
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>Ainda não tem conta?</Text>
@@ -269,6 +270,9 @@ function createStyles(colors: ThemeColors, typography: ThemeTypography) {
       paddingHorizontal: Spacing.lg,
       paddingVertical: Spacing.xl,
       gap: Spacing.lg,
+      width: '100%',
+      maxWidth: 460,
+      alignSelf: 'center',
     },
     brandBlock: {
       alignItems: 'center',

@@ -62,9 +62,9 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: 'Inicio',
-            tabBarLabel: 'Inicio',
-            tabBarAccessibilityLabel: 'Abrir inicio',
+            title: 'Início',
+            tabBarLabel: 'Início',
+            tabBarAccessibilityLabel: 'Abrir início',
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
                 color={color}

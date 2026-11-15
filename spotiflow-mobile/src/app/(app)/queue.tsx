@@ -11,6 +11,10 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
+  PlayingEqualizer,
+  ScalePressable,
+} from '../../components/AnimatedMotion';
+import {
   Radius,
   Spacing,
   type ThemeColors,
@@ -92,7 +96,7 @@ export default function QueueScreen() {
             {currentTrack && (
               <View style={styles.sectionBlock}>
                 <Text style={styles.sectionLabel}>Tocando agora</Text>
-                <Pressable
+                <ScalePressable
                   style={styles.nowPlayingCard}
                   onPress={togglePlayPause}
                   accessibilityRole="button"
@@ -104,9 +108,18 @@ export default function QueueScreen() {
                     contentFit="cover"
                   />
                   <View style={styles.trackInfo}>
-                    <Text style={styles.nowPlayingTitle} numberOfLines={1}>
-                      {currentTrack.title}
-                    </Text>
+                    <View style={styles.nowPlayingTitleRow}>
+                      {isPlaying && (
+                        <PlayingEqualizer
+                          isPlaying={isPlaying}
+                          color={colors.primary}
+                          size={12}
+                        />
+                      )}
+                      <Text style={styles.nowPlayingTitle} numberOfLines={1}>
+                        {currentTrack.title}
+                      </Text>
+                    </View>
                     <Text style={styles.trackArtist} numberOfLines={1}>
                       {currentTrack.artist}
                     </Text>
@@ -121,7 +134,7 @@ export default function QueueScreen() {
                     tintColor={colors.primary}
                     type="hierarchical"
                   />
-                </Pressable>
+                </ScalePressable>
               </View>
             )}
 
@@ -211,6 +224,14 @@ function createStyles(colors: ThemeColors, typography: ThemeTypography) {
     listContent: {
       padding: Spacing.md,
       gap: Spacing.sm,
+      width: '100%',
+      maxWidth: 640,
+      alignSelf: 'center',
+    },
+    nowPlayingTitleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
     },
     headerSections: {
       gap: Spacing.md,

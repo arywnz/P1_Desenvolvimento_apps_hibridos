@@ -8,35 +8,51 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScalePressable } from '../../../components/AnimatedMotion';
 import { StateView } from '../../../components/StateView';
-import { USER_PROFILE } from '../../../constants/mockData';
 import {
   Radius,
   Spacing,
   type ThemeColors,
   type ThemeTypography,
 } from '../../../constants/theme';
+import { useAuth } from '../../../context/AuthContext';
 import { useLibrary } from '../../../context/LibraryContext';
 import { useTheme } from '../../../context/ThemeContext';
 import { useFetch } from '../../../hooks/useFetch';
 import { api } from '../../../services/api';
 import type { Playlist } from '../../../types/music';
+import { resolveUserAvatar } from '../../../utils/userAvatar';
 
 const LIBRARY_FILTERS = ['Playlists', 'Baixado', 'Deezer'] as const;
 
 export default function LibraryScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const { colors, typography } = useTheme();
+  const { user } = useAuth();
   const { playlists: localPlaylists } = useLibrary();
-  const styles = useMemo(
-    () => createStyles(colors, typography),
-    [colors, typography]
-  );
+
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+  const [sortAlphabetical, setSortAlphabetical] = useState(false);
+  const [isGridView, setIsGridView] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+
+  const gridColumns = width >= 680 ? 3 : 2;
+  const gridCardWidth = Math.floor(
+    (width - Spacing.md * 2 - Spacing.md * (gridColumns - 1)) / gridColumns
+  );
+  const bottomSpacer = 108 + Math.max(insets.bottom, 12);
+
+  const styles = useMemo(
+    () => createStyles(colors, typography, gridCardWidth, bottomSpacer),
+    [colors, typography, gridCardWidth, bottomSpacer]
+  );
 
   const fetchChart = useCallback(() => api.getChart(10), []);
   const { data, loading, error, reload } = useFetch(fetchChart);
@@ -50,7 +66,10 @@ export default function LibraryScreen() {
 
   const displayedPlaylists = useMemo(() => {
     const apiIds = new Set((data?.playlists ?? []).map((p) => p.id));
-    return mergedPlaylists.filter((playlist) => {
+    const filtered = mergedPlaylists.filter((playlist) => {
+      if (selectedFilter === 'Playlists') {
+        return !apiIds.has(playlist.id);
+      }
       if (selectedFilter === 'Baixado') {
         return Boolean(playlist.isDownloaded);
       }
@@ -59,7 +78,12 @@ export default function LibraryScreen() {
       }
       return true;
     });
-  }, [data?.playlists, mergedPlaylists, selectedFilter]);
+
+    if (sortAlphabetical) {
+      return [...filtered].sort((a, b) => a.title.localeCompare(b.title, 'pt-BR'));
+    }
+    return filtered;
+  }, [data?.playlists, mergedPlaylists, selectedFilter, sortAlphabetical]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -70,8 +94,11 @@ export default function LibraryScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <FlatList
+        key={`${isGridView ? 'grid' : 'list'}-${gridColumns}`}
         data={displayedPlaylists}
         keyExtractor={(item) => item.id}
+        numColumns={isGridView ? gridColumns : 1}
+        columnWrapperStyle={isGridView ? styles.gridRow : undefined}
         style={styles.container}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -93,9 +120,7 @@ export default function LibraryScreen() {
                 accessibilityLabel="Abrir perfil"
               >
                 <Image
-                  source={
-                    USER_PROFILE.avatarSource ?? { uri: USER_PROFILE.avatarUrl }
-                  }
+                  source={resolveUserAvatar(user)}
                   style={styles.avatar}
                   contentFit="cover"
                 />
@@ -174,7 +199,13 @@ export default function LibraryScreen() {
 
             {/* Barra de Ordenação */}
             <View style={styles.sortBar}>
-              <Pressable style={styles.sortButton} hitSlop={8}>
+              <Pressable
+                style={styles.sortButton}
+                hitSlop={8}
+                onPress={() => setSortAlphabetical((prev) => !prev)}
+                accessibilityRole="button"
+                accessibilityLabel="Alternar ordenação das playlists"
+              >
                 <SymbolView
                   name={{
                     ios: 'arrow.up.arrow.down',
@@ -182,23 +213,33 @@ export default function LibraryScreen() {
                     web: 'swap_vert',
                   }}
                   size={18}
-                  tintColor={colors.textPrimary}
+                  tintColor={sortAlphabetical ? colors.primary : colors.textPrimary}
                   type="hierarchical"
                 />
                 <Text style={styles.sortText}>
-                  Recentes ({displayedPlaylists.length})
+                  {sortAlphabetical ? 'Alfabética A–Z' : 'Recentes'} (
+                  {displayedPlaylists.length})
                 </Text>
               </Pressable>
 
-              <Pressable hitSlop={8}>
+              <Pressable
+                hitSlop={8}
+                onPress={() => setIsGridView((prev) => !prev)}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  isGridView
+                    ? 'Alternar para visualização em lista'
+                    : 'Alternar para visualização em grade'
+                }
+              >
                 <SymbolView
                   name={{
-                    ios: 'square.grid.2x2',
-                    android: 'grid_view',
-                    web: 'grid_view',
+                    ios: isGridView ? 'list.bullet' : 'square.grid.2x2',
+                    android: isGridView ? 'view_list' : 'grid_view',
+                    web: isGridView ? 'view_list' : 'grid_view',
                   }}
                   size={20}
-                  tintColor={colors.textPrimary}
+                  tintColor={isGridView ? colors.primary : colors.textPrimary}
                   type="hierarchical"
                 />
               </Pressable>
@@ -221,8 +262,8 @@ export default function LibraryScreen() {
         }
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         renderItem={({ item: playlist }) => (
-          <Pressable
-            style={styles.playlistItem}
+          <ScalePressable
+            style={isGridView ? styles.gridCard : styles.playlistItem}
             onPress={() =>
               router.push({
                 pathname: '/playlist/[id]',
@@ -234,11 +275,11 @@ export default function LibraryScreen() {
           >
             <Image
               source={playlist.coverSource ?? { uri: playlist.coverUrl }}
-              style={styles.playlistCover}
+              style={isGridView ? styles.gridCover : styles.playlistCover}
               contentFit="cover"
             />
 
-            <View style={styles.playlistInfo}>
+            <View style={isGridView ? styles.gridInfo : styles.playlistInfo}>
               <Text
                 style={[
                   styles.playlistTitle,
@@ -291,14 +332,19 @@ export default function LibraryScreen() {
                 </Text>
               </View>
             </View>
-          </Pressable>
+          </ScalePressable>
         )}
       />
     </SafeAreaView>
   );
 }
 
-function createStyles(colors: ThemeColors, typography: ThemeTypography) {
+function createStyles(
+  colors: ThemeColors,
+  typography: ThemeTypography,
+  gridCardWidth: number,
+  bottomSpacer: number
+) {
   return StyleSheet.create({
     safeArea: {
       flex: 1,
@@ -310,7 +356,7 @@ function createStyles(colors: ThemeColors, typography: ThemeTypography) {
     content: {
       paddingHorizontal: Spacing.md,
       paddingTop: Spacing.md,
-      paddingBottom: 110,
+      paddingBottom: bottomSpacer,
       flexGrow: 1,
     },
     header: {
@@ -385,6 +431,24 @@ function createStyles(colors: ThemeColors, typography: ThemeTypography) {
       width: 64,
       height: 64,
       borderRadius: Radius.xs,
+      backgroundColor: colors.surfaceCard,
+    },
+    gridRow: {
+      gap: Spacing.md,
+      justifyContent: 'flex-start',
+    },
+    gridCard: {
+      width: gridCardWidth,
+      gap: Spacing.xs,
+    },
+    gridCover: {
+      width: gridCardWidth,
+      height: gridCardWidth,
+      borderRadius: Radius.md,
+      backgroundColor: colors.surfaceCard,
+    },
+    gridInfo: {
+      gap: 2,
     },
     playlistInfo: {
       flex: 1,

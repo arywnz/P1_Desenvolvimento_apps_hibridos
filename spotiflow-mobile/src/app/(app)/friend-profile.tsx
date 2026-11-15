@@ -1,19 +1,24 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PulsingLiveDot } from '../../components/AnimatedMotion';
 import { ResourceNotFound } from '../../components/ResourceNotFound';
-import { FRIENDS_ACTIVITY, MOCK_PLAYLISTS } from '../../constants/mockData';
+import { StateView } from '../../components/StateView';
+import { FRIENDS_ACTIVITY } from '../../constants/mockData';
 import {
   Radius,
   Spacing,
   type ThemeColors,
   type ThemeTypography,
 } from '../../constants/theme';
+import { useLibrary } from '../../context/LibraryContext';
 import { usePlayer } from '../../context/PlayerContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useFetch } from '../../hooks/useFetch';
+import { api } from '../../services/api';
 
 export default function FriendProfileScreen() {
   const router = useRouter();
@@ -24,10 +29,32 @@ export default function FriendProfileScreen() {
     () => createStyles(colors, typography),
     [colors, typography]
   );
+  const { followedArtists, toggleFollowArtist } = useLibrary();
   const { playTrack } = usePlayer();
-  const [isFollowing, setIsFollowing] = useState(false);
 
   const friend = FRIENDS_ACTIVITY.find((f) => f.id === id);
+  const firstPlaylistQueries = useMemo(
+    () => friend?.playlists[0]?.trackQueries ?? [],
+    [friend]
+  );
+
+  const fetchFriendTracks = useCallback(
+    () =>
+      api.resolvePlaylistTracks(
+        `friend-preview:${friend?.id ?? ''}`,
+        firstPlaylistQueries.slice(0, 5)
+      ),
+    [firstPlaylistQueries, friend?.id]
+  );
+
+  const {
+    data: resolvedFriendTracks,
+    loading: loadingTracks,
+    error: tracksError,
+    reload: reloadFriendTracks,
+  } = useFetch(fetchFriendTracks, {
+    enabled: Boolean(friend && firstPlaylistQueries.length > 0),
+  });
 
   if (!friend) {
     return (
@@ -38,9 +65,25 @@ export default function FriendProfileScreen() {
     );
   }
 
-  const previewTracks = friend.playlists
-    .flatMap((playlist) => playlist.tracks)
-    .slice(0, 5);
+  const friendTracks = resolvedFriendTracks ?? [];
+
+  const followKey = `friend:${friend.id}`;
+  const isFollowing = followedArtists.includes(followKey);
+
+  const handlePlayFriendTrack = async () => {
+    if (!friend.currentTrack) return;
+    try {
+      const query = `${friend.currentTrack} ${friend.currentArtist ?? ''}`.trim();
+      const page = await api.searchTracks(query, 0, 5);
+      const trackToPlay = page.tracks.find((item) => Boolean(item.previewUrl)) ?? page.tracks[0];
+      if (trackToPlay) {
+        playTrack(trackToPlay, page.tracks);
+        router.push('/player');
+      }
+    } catch {
+      // Sem conexão para buscar a prévia na Deezer
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -91,7 +134,7 @@ export default function FriendProfileScreen() {
               styles.followButton,
               isFollowing && styles.followButtonActive,
             ]}
-            onPress={() => setIsFollowing(!isFollowing)}
+            onPress={() => toggleFollowArtist(followKey)}
             accessibilityRole="button"
           >
             <Text
@@ -109,7 +152,7 @@ export default function FriendProfileScreen() {
         {friend.currentTrack && (
           <View style={styles.activityBox}>
             <View style={styles.activityBadgeRow}>
-              <View style={styles.pulsingDot} />
+              <PulsingLiveDot color={colors.primary} size={8} />
               <Text style={styles.activityBadgeText}>OUVINDO AGORA</Text>
             </View>
 
@@ -126,11 +169,10 @@ export default function FriendProfileScreen() {
               <Pressable
                 style={styles.activityPlayButton}
                 onPress={() => {
-                  if (MOCK_PLAYLISTS[0].tracks.length > 0) {
-                    playTrack(MOCK_PLAYLISTS[0].tracks[0]);
-                  }
+                  void handlePlayFriendTrack();
                 }}
                 accessibilityRole="button"
+                accessibilityLabel={`Ouvir ${friend.currentTrack}`}
               >
                 <SymbolView
                   name={{
@@ -147,51 +189,70 @@ export default function FriendProfileScreen() {
           </View>
         )}
 
-        {previewTracks.length > 0 && (
+        {/* Faixas favoritas do amigo (Deezer API ao vivo) */}
+        {firstPlaylistQueries.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Musicas do amigo</Text>
-            <View style={styles.trackPreviewList}>
-              {previewTracks.map((track) => (
-                <Pressable
-                  key={track.id}
-                  style={styles.trackPreviewRow}
-                  onPress={() => playTrack(track)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Tocar ${track.title} de ${track.artist}`}
-                >
-                  <Image
-                    source={{ uri: track.coverUrl }}
-                    style={styles.trackPreviewCover}
-                    contentFit="cover"
-                  />
-                  <View style={styles.trackPreviewTextGroup}>
-                    <Text style={styles.trackPreviewTitle} numberOfLines={1}>
-                      {track.title}
-                    </Text>
-                    <Text style={styles.trackPreviewArtist} numberOfLines={1}>
-                      {track.artist}
-                    </Text>
-                  </View>
-                  <Text style={styles.trackPreviewDuration}>
-                    {track.duration}
-                  </Text>
-                  <SymbolView
-                    name={{
-                      ios: 'play.circle.fill',
-                      android: 'play_circle',
-                      web: 'play_circle',
+            <Text style={styles.sectionTitle}>
+              Faixas mais ouvidas por {friend.name}
+            </Text>
+            <StateView
+              loading={loadingTracks && friendTracks.length === 0}
+              error={friendTracks.length === 0 ? tracksError : null}
+              isEmpty={friendTracks.length === 0}
+              loadingLabel="Buscando prévias na Deezer..."
+              emptyTitle="Sem faixas carregadas"
+              emptyDescription="Não foi possível carregar as músicas deste perfil."
+              onRetry={() => {
+                void reloadFriendTracks();
+              }}
+            >
+              <View style={styles.trackPreviewList}>
+                {friendTracks.map((track) => (
+                  <Pressable
+                    key={track.id}
+                    style={styles.trackPreviewRow}
+                    onPress={() => {
+                      playTrack(track, friendTracks);
+                      router.push('/player');
                     }}
-                    size={28}
-                    tintColor={colors.primary}
-                    type="hierarchical"
-                  />
-                </Pressable>
-              ))}
-            </View>
+                    accessibilityRole="button"
+                    accessibilityLabel={`Tocar ${track.title} de ${track.artist}`}
+                  >
+                    <Image
+                      source={{ uri: track.coverUrl }}
+                      style={styles.trackPreviewCover}
+                      contentFit="cover"
+                    />
+                    <View style={styles.trackPreviewTextGroup}>
+                      <Text style={styles.trackPreviewTitle} numberOfLines={1}>
+                        {track.title}
+                      </Text>
+                      <Text style={styles.trackPreviewArtist} numberOfLines={1}>
+                        {track.artist}
+                      </Text>
+                    </View>
+                    <Text style={styles.trackPreviewDuration}>
+                      {track.duration}
+                    </Text>
+                    <SymbolView
+                      name={{
+                        ios: 'play.circle.fill',
+                        android: 'play_circle',
+                        web: 'play_circle',
+                      }}
+                      size={24}
+                      tintColor={colors.primary}
+                      type="hierarchical"
+                    />
+                  </Pressable>
+                ))}
+              </View>
+            </StateView>
           </View>
         )}
 
-        {/* Playlists Públicas Exclusivas do Amigo */}
+        {/* Playlists Públicas do Amigo */}
+        {friend.playlists.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Playlists públicas</Text>
           <ScrollView
@@ -234,6 +295,7 @@ export default function FriendProfileScreen() {
             })}
           </ScrollView>
         </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

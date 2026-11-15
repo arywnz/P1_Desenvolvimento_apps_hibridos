@@ -7,9 +7,10 @@ import {
   type ReactNode,
 } from 'react';
 import {
-  CURRENT_TRACK,
+  CURATED_PLAYLISTS,
+  DEFAULT_PLAYLIST_COVER_SOURCE,
+  DEFAULT_PLAYLIST_COVER_URL,
   FRIENDS_ACTIVITY,
-  MOCK_PLAYLISTS,
   type Playlist,
 } from '../constants/mockData';
 
@@ -38,10 +39,11 @@ const FRIEND_PLAYLISTS = FRIENDS_ACTIVITY.flatMap((f) => f.playlists);
 
 export function LibraryProvider({ children }: { children: ReactNode }) {
   // Aula 10: playlists criadas e salvamentos podem ser persistidos em SQLite/AsyncStorage.
-  const [playlists, setPlaylists] = useState<Playlist[]>(MOCK_PLAYLISTS);
+  const [playlists, setPlaylists] = useState<Playlist[]>(CURATED_PLAYLISTS);
   const [savedIds, setSavedIds] = useState<string[]>([
     'liked-songs',
     'echos-of-us',
+    'my-peace',
   ]);
   const [followedArtists, setFollowedArtists] = useState<string[]>([]);
 
@@ -59,11 +61,12 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
         title: cleanTitle,
         subtitle: cleanSubtitle,
         author: authorName,
-        coverUrl: CURRENT_TRACK.coverUrl,
-        tracksCount: 1,
+        coverUrl: DEFAULT_PLAYLIST_COVER_URL,
+        coverSource: DEFAULT_PLAYLIST_COVER_SOURCE,
+        tracksCount: 0,
         isPinned,
         isDownloaded: false,
-        tracks: [CURRENT_TRACK],
+        tracks: [],
       };
 
       setPlaylists((prev) => [newPlaylist, ...prev]);

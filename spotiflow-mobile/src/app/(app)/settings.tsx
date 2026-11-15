@@ -17,12 +17,14 @@ import {
   type ThemeTypography,
 } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
+import { usePlayer } from '../../context/PlayerContext';
 import { useTheme } from '../../context/ThemeContext';
 
 export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, signOut } = useAuth();
+  const { stopPlayback } = usePlayer();
   const { colors, typography, isDark, setMode } = useTheme();
   const styles = useMemo(
     () => createStyles(colors, typography),
@@ -98,10 +100,10 @@ export default function SettingsScreen() {
               style={styles.rowAction}
               onPress={() => router.push('/profile')}
               accessibilityRole="button"
-              accessibilityLabel="Ver perfil do usuario"
+              accessibilityLabel="Ver perfil do usuário"
             >
               <View style={styles.rowTextGroup}>
-                <Text style={styles.rowTitle}>Perfil do usuario</Text>
+                <Text style={styles.rowTitle}>Perfil do usuário</Text>
                 <Text style={styles.rowSubtitle}>
                   Ver amigos, mensagens e atividade recente
                 </Text>
@@ -248,6 +250,7 @@ export default function SettingsScreen() {
         <Pressable
           style={styles.logoutButton}
           onPress={() => {
+            stopPlayback();
             signOut();
             router.replace('/login');
           }}

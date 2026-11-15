@@ -14,35 +14,50 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { StateView } from '../../../components/StateView';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  MOCK_PLAYLISTS,
-  SEARCH_CATEGORIES,
-  USER_PROFILE,
-} from '../../../constants/mockData';
+  FadeInSection,
+  PlayingEqualizer,
+  ScalePressable,
+} from '../../../components/AnimatedMotion';
+import { StateView } from '../../../components/StateView';
+import { SEARCH_CATEGORIES } from '../../../constants/mockData';
 import {
   Radius,
   Spacing,
   type ThemeColors,
   type ThemeTypography,
 } from '../../../constants/theme';
+import { useAuth } from '../../../context/AuthContext';
+import { useLibrary } from '../../../context/LibraryContext';
 import { usePlayer } from '../../../context/PlayerContext';
 import { useTheme } from '../../../context/ThemeContext';
 import { useDebounce } from '../../../hooks/useDebounce';
+import { useFetch } from '../../../hooks/useFetch';
 import { api } from '../../../services/api';
 import type { Track } from '../../../types/music';
+import { resolveUserAvatar } from '../../../utils/userAvatar';
 
 const PAGE_SIZE = 20;
 
 export default function SearchScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { colors, typography } = useTheme();
-  const { playTrack, currentTrack, addToQueue } = usePlayer();
+  const { user } = useAuth();
+  const { playlists } = useLibrary();
+  const { playTrack, currentTrack, isPlaying, addToQueue } = usePlayer();
 
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedQuery = useDebounce(searchQuery.trim(), 450);
+
+  const fetchFeatured = useCallback(() => api.getChart(6), []);
+  const { data: featuredChart } = useFetch(fetchFeatured);
+  const featuredPlaylists = useMemo(
+    () => [...playlists, ...(featuredChart?.playlists ?? [])],
+    [featuredChart?.playlists, playlists]
+  );
 
   const [results, setResults] = useState<Track[]>([]);
   const [totalResults, setTotalResults] = useState(0);
@@ -56,10 +71,24 @@ export default function SearchScreen() {
   const requestCounterRef = useRef(0);
   const loadingMoreRef = useRef(false);
 
-  const categoryWidth = Math.floor((width - Spacing.md * 3) / 2);
+  const categoryColumns = width >= 720 ? 4 : width >= 500 ? 3 : 2;
+  const categoryWidth = Math.floor(
+    (width - Spacing.md * 2 - Spacing.md * (categoryColumns - 1)) /
+      categoryColumns
+  );
+  const featuredWidth = Math.min(Math.max(Math.round(width * 0.38), 140), 188);
+  const bottomSpacer = 108 + Math.max(insets.bottom, 12);
+
   const styles = useMemo(
-    () => createStyles(colors, typography, categoryWidth),
-    [colors, typography, categoryWidth]
+    () =>
+      createStyles(
+        colors,
+        typography,
+        categoryWidth,
+        featuredWidth,
+        bottomSpacer
+      ),
+    [colors, typography, categoryWidth, featuredWidth, bottomSpacer]
   );
 
   const runInitialSearch = useCallback(async (query: string) => {
@@ -152,9 +181,7 @@ export default function SearchScreen() {
             accessibilityLabel="Abrir perfil"
           >
             <Image
-              source={
-                USER_PROFILE.avatarSource ?? { uri: USER_PROFILE.avatarUrl }
-              }
+              source={resolveUserAvatar(user)}
               style={styles.avatar}
               contentFit="cover"
             />
@@ -164,16 +191,17 @@ export default function SearchScreen() {
 
           <Pressable
             hitSlop={8}
+            onPress={() => router.push('/queue')}
             accessibilityRole="button"
-            accessibilityLabel="Buscar com câmera"
+            accessibilityLabel="Abrir fila de reprodução"
           >
             <SymbolView
               name={{
-                ios: 'camera',
-                android: 'photo_camera',
-                web: 'photo_camera',
+                ios: 'list.bullet',
+                android: 'queue_music',
+                web: 'queue_music',
               }}
-              size={24}
+              size={22}
               tintColor={colors.textPrimary}
               type="hierarchical"
             />
@@ -282,15 +310,24 @@ export default function SearchScreen() {
                     contentFit="cover"
                   />
                   <View style={styles.trackInfo}>
-                    <Text
-                      style={[
-                        styles.trackTitle,
-                        isSelected && styles.trackTitleActive,
-                      ]}
-                      numberOfLines={1}
-                    >
-                      {track.title}
-                    </Text>
+                    <View style={styles.trackTitleRow}>
+                      {isSelected && isPlaying && (
+                        <PlayingEqualizer
+                          isPlaying={isPlaying}
+                          color={colors.primary}
+                          size={12}
+                        />
+                      )}
+                      <Text
+                        style={[
+                          styles.trackTitle,
+                          isSelected && styles.trackTitleActive,
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {track.title}
+                      </Text>
+                    </View>
                     <Pressable
                       onPress={() =>
                         router.push({
@@ -339,18 +376,19 @@ export default function SearchScreen() {
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
-          {/* Carrossel de Destaques */}
-          <View style={styles.carouselSection}>
+          {/* Carrossel de Destaques da Deezer */}
+          {featuredPlaylists.length > 0 && (
+          <FadeInSection delay={30} style={styles.carouselSection}>
             <Text style={styles.sectionTitle}>
-              Playlists que você pode assistir
+              Playlists em destaque na Deezer
             </Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.horizontalScroll}
             >
-              {MOCK_PLAYLISTS.slice(0, 3).map((playlist) => (
-                <Pressable
+              {featuredPlaylists.map((playlist) => (
+                <ScalePressable
                   key={playlist.id}
                   style={styles.featuredCard}
                   onPress={() =>
@@ -368,24 +406,29 @@ export default function SearchScreen() {
                     contentFit="cover"
                   />
                   <View style={styles.featuredOverlay}>
-                    <Text style={styles.featuredBadge}>VÍDEOS PARA VOCÊ</Text>
+                    <Text style={styles.featuredBadge}>
+                      {playlist.trackQueries
+                        ? 'SUA PLAYLIST • DEEZER'
+                        : 'EM ALTA NA DEEZER'}
+                    </Text>
                     <Text style={styles.featuredTitle} numberOfLines={2}>
                       {playlist.title}
                     </Text>
                   </View>
-                </Pressable>
+                </ScalePressable>
               ))}
             </ScrollView>
-          </View>
+          </FadeInSection>
+          )}
 
           {/* Grid de Seções e Gêneros Musicais */}
-          <View style={styles.section}>
+          <FadeInSection delay={100} style={styles.section}>
             <Text style={styles.sectionTitle}>
               Navegar por todas as seções
             </Text>
             <View style={styles.gridContainer}>
               {SEARCH_CATEGORIES.map((category) => (
-                <Pressable
+                <ScalePressable
                   key={category.id}
                   style={[
                     styles.categoryCard,
@@ -401,10 +444,10 @@ export default function SearchScreen() {
                     style={styles.categoryImage}
                     contentFit="cover"
                   />
-                </Pressable>
+                </ScalePressable>
               ))}
             </View>
-          </View>
+          </FadeInSection>
         </ScrollView>
       )}
     </SafeAreaView>
@@ -414,7 +457,9 @@ export default function SearchScreen() {
 function createStyles(
   colors: ThemeColors,
   typography: ThemeTypography,
-  categoryWidth: number
+  categoryWidth: number,
+  featuredWidth: number,
+  bottomSpacer: number
 ) {
   return StyleSheet.create({
     safeArea: {
@@ -430,11 +475,11 @@ function createStyles(
     },
     content: {
       paddingHorizontal: Spacing.md,
-      paddingBottom: 110,
+      paddingBottom: bottomSpacer,
     },
     resultsContent: {
       paddingHorizontal: Spacing.md,
-      paddingBottom: 110,
+      paddingBottom: bottomSpacer,
       gap: Spacing.xs,
     },
     header: {
@@ -498,9 +543,15 @@ function createStyles(
       flex: 1,
       gap: 2,
     },
+    trackTitleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
     trackTitle: {
       ...typography.bodyMedium,
       fontWeight: '700',
+      flexShrink: 1,
     },
     trackTitleActive: {
       color: colors.primary,
@@ -529,8 +580,8 @@ function createStyles(
       paddingRight: Spacing.md,
     },
     featuredCard: {
-      width: 150,
-      height: 200,
+      width: featuredWidth,
+      height: Math.round(featuredWidth * 1.32),
       borderRadius: Radius.md,
       overflow: 'hidden',
       position: 'relative',
@@ -569,7 +620,7 @@ function createStyles(
       flexDirection: 'row',
       flexWrap: 'wrap',
       gap: Spacing.md,
-      justifyContent: 'space-between',
+      justifyContent: 'flex-start',
     },
     categoryCard: {
       width: categoryWidth,

@@ -19,6 +19,8 @@ const AUTH_BASE =
   process.env.EXPO_PUBLIC_AUTH_API_URL ?? 'https://dummyjson.com';
 
 const DEFAULT_TIMEOUT_MS = 10_000;
+const resolvedTracksCache = new Map<string, Track[]>();
+const inFlightResolutions = new Map<string, Promise<Track[]>>();
 
 function formatDuration(seconds: number): string {
   const safeSeconds = Math.max(0, Math.floor(seconds));
@@ -217,5 +219,88 @@ export const api = {
         expiresInMins: payload.expiresInMins ?? 60,
       }),
     });
+  },
+
+  async resolveTrackByQuery(query: string): Promise<Track | null> {
+    const clean = query.trim();
+    if (!clean) return null;
+
+    const page = await api.searchTracks(clean, 0, 5);
+    return (
+      page.tracks.find((track) => Boolean(track.previewUrl)) ??
+      page.tracks[0] ??
+      null
+    );
+  },
+
+  getCachedPlaylistTracks(cacheKey: string): Track[] | undefined {
+    return resolvedTracksCache.get(cacheKey);
+  },
+
+  async resolvePlaylistTracks(
+    cacheKey: string,
+    queries: string[],
+    forceRefresh = false
+  ): Promise<Track[]> {
+    if (queries.length === 0) {
+      return [];
+    }
+
+    if (!forceRefresh) {
+      const cached = resolvedTracksCache.get(cacheKey);
+      if (cached && cached.length > 0) {
+        return cached;
+      }
+
+      const existingPromise = inFlightResolutions.get(cacheKey);
+      if (existingPromise) {
+        return existingPromise;
+      }
+    } else {
+      resolvedTracksCache.delete(cacheKey);
+    }
+
+    const resolutionPromise = (async () => {
+      const CHUNK_SIZE = 5;
+      const seenIds = new Set<string>();
+      const resolved: Track[] = [];
+      let lastErrorMessage: string | null = null;
+
+      for (let i = 0; i < queries.length; i += CHUNK_SIZE) {
+        const chunk = queries.slice(i, i + CHUNK_SIZE);
+        const settled = await Promise.allSettled(
+          chunk.map((query) => api.resolveTrackByQuery(query))
+        );
+
+        for (const result of settled) {
+          if (result.status === 'fulfilled' && result.value) {
+            const track = result.value;
+            if (!seenIds.has(track.id)) {
+              seenIds.add(track.id);
+              resolved.push(track);
+            }
+          } else if (result.status === 'rejected' && result.reason instanceof Error) {
+            lastErrorMessage = result.reason.message;
+          }
+        }
+      }
+
+      if (resolved.length === 0) {
+        throw new Error(
+          lastErrorMessage ||
+            'Não foi possível carregar as faixas desta playlist na Deezer.'
+        );
+      }
+
+      resolvedTracksCache.set(cacheKey, resolved);
+      return resolved;
+    })();
+
+    inFlightResolutions.set(cacheKey, resolutionPromise);
+    try {
+      return await resolutionPromise;
+    } finally {
+      inFlightResolutions.delete(cacheKey);
+    }
   },
 };

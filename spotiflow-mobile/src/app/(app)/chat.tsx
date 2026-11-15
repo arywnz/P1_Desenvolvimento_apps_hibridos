@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ResourceNotFound } from '../../components/ResourceNotFound';
-import { type ChatMessage, DIRECT_MESSAGES } from '../../constants/mockData';
+import { type ChatMessage, DIRECT_MESSAGES, type SharedTrackRef } from '../../constants/mockData';
 import {
   Radius,
   Spacing,
@@ -23,6 +23,7 @@ import {
 } from '../../constants/theme';
 import { usePlayer } from '../../context/PlayerContext';
 import { useTheme } from '../../context/ThemeContext';
+import { api } from '../../services/api';
 
 export default function ChatScreen() {
   const router = useRouter();
@@ -41,6 +42,7 @@ export default function ChatScreen() {
     conversation?.messages ?? []
   );
   const [inputText, setInputText] = useState('');
+  const listRef = useRef<FlatList<ChatMessage>>(null);
 
   if (!conversation) {
     return (
@@ -50,6 +52,18 @@ export default function ChatScreen() {
       />
     );
   }
+
+  const handlePlaySharedTrack = async (sharedRef: SharedTrackRef) => {
+    try {
+      const resolved = await api.resolveTrackByQuery(sharedRef.query);
+      if (resolved) {
+        playTrack(resolved, [resolved]);
+        router.push('/player');
+      }
+    } catch {
+      // Sem conexão para carregar a prévia na Deezer
+    }
+  };
 
   const handleSendMessage = () => {
     if (!inputText.trim()) return;
@@ -63,6 +77,9 @@ export default function ChatScreen() {
 
     setMessages((prev) => [...prev, newMsg]);
     setInputText('');
+    setTimeout(() => {
+      listRef.current?.scrollToEnd({ animated: true });
+    }, 60);
   };
 
   return (
@@ -106,8 +123,10 @@ export default function ChatScreen() {
       >
         {/* Lista de Mensagens */}
         <FlatList
+          ref={listRef}
           data={messages}
           keyExtractor={(item) => item.id}
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={[styles.messageList, { paddingBottom: 16 }]}
           renderItem={({ item }) => {
             const isMe = item.sender === 'me';
@@ -135,24 +154,37 @@ export default function ChatScreen() {
                   </Text>
 
                   {/* Card de Música Compartilhada */}
-                  {item.sharedTrack && (
+                  {(item.sharedTrack || item.sharedTrackRef) && (
                     <Pressable
                       style={styles.sharedTrackCard}
-                      onPress={() => playTrack(item.sharedTrack!)}
+                      onPress={() => {
+                        if (item.sharedTrack) {
+                          playTrack(item.sharedTrack);
+                          router.push('/player');
+                        } else if (item.sharedTrackRef) {
+                          void handlePlaySharedTrack(item.sharedTrackRef);
+                        }
+                      }}
                       accessibilityRole="button"
-                      accessibilityLabel={`Tocar ${item.sharedTrack.title}`}
+                      accessibilityLabel={`Tocar ${item.sharedTrack?.title ?? item.sharedTrackRef?.title}`}
                     >
                       <Image
-                        source={{ uri: item.sharedTrack.coverUrl }}
+                        source={{
+                          uri:
+                            item.sharedTrack?.coverUrl ??
+                            item.sharedTrackRef?.coverUrl,
+                        }}
                         style={styles.sharedCover}
                         contentFit="cover"
                       />
                       <View style={styles.sharedInfo}>
                         <Text style={styles.sharedTitle} numberOfLines={1}>
-                          {item.sharedTrack.title}
+                          {item.sharedTrack?.title ??
+                            item.sharedTrackRef?.title}
                         </Text>
                         <Text style={styles.sharedArtist} numberOfLines={1}>
-                          {item.sharedTrack.artist}
+                          {item.sharedTrack?.artist ??
+                            item.sharedTrackRef?.artist}
                         </Text>
                       </View>
                       <SymbolView
@@ -195,6 +227,8 @@ export default function ChatScreen() {
             placeholderTextColor={colors.textMuted}
             value={inputText}
             onChangeText={setInputText}
+            returnKeyType="send"
+            onSubmitEditing={handleSendMessage}
           />
           <Pressable
             style={[

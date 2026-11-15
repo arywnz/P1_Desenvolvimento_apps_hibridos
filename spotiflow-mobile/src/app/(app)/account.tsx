@@ -3,20 +3,23 @@ import { SymbolView } from 'expo-symbols';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MOCK_PLAYLISTS, USER_PROFILE } from '../../constants/mockData';
+import { USER_PROFILE } from '../../constants/mockData';
 import {
   Radius,
   Spacing,
   type ThemeColors,
   type ThemeTypography,
 } from '../../constants/theme';
+import { useAuth } from '../../context/AuthContext';
 import { usePlayer } from '../../context/PlayerContext';
 import { useTheme } from '../../context/ThemeContext';
+import { api } from '../../services/api';
 
 export default function AccountScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { type } = useLocalSearchParams<{ type: string }>();
+  const { user } = useAuth();
   const { colors, typography } = useTheme();
   const styles = useMemo(
     () => createStyles(colors, typography),
@@ -106,7 +109,7 @@ export default function AccountScreen() {
           infoItems: [
             {
               label: 'Conta Principal',
-              val: `${USER_PROFILE.name} (${USER_PROFILE.plan})`,
+              val: `${user?.name ?? USER_PROFILE.name} (${user?.plan ?? USER_PROFILE.plan})`,
             },
             {
               label: 'Perfil Kids',
@@ -189,12 +192,18 @@ export default function AccountScreen() {
           </View>
         </View>
 
-        {/* Atalho de Reprodução Rápida */}
+        {/* Atalho de Reprodução Rápida (carrega Top 1 real da Deezer) */}
         <Pressable
           style={styles.actionButton}
-          onPress={() => {
-            if (MOCK_PLAYLISTS[0].tracks.length > 0) {
-              playTrack(MOCK_PLAYLISTS[0].tracks[0]);
+          onPress={async () => {
+            try {
+              const chart = await api.getChart(5);
+              if (chart.tracks.length > 0) {
+                playTrack(chart.tracks[0], chart.tracks);
+                router.push('/player');
+              }
+            } catch {
+              // Sem rede no momento
             }
           }}
           accessibilityRole="button"

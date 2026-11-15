@@ -227,6 +227,9 @@ function createStyles(colors: ThemeColors, typography: ThemeTypography) {
     scrollContent: {
       padding: Spacing.lg,
       paddingBottom: Spacing.xl * 2,
+      width: '100%',
+      maxWidth: 460,
+      alignSelf: 'center',
     },
     formCard: {
       backgroundColor: colors.surfaceCard,

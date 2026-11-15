@@ -1,16 +1,21 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   Pressable,
   RefreshControl,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  PlayingEqualizer,
+  ScalePressable,
+} from '../../../components/AnimatedMotion';
 import { ResourceNotFound } from '../../../components/ResourceNotFound';
 import { StateView } from '../../../components/StateView';
 import {
@@ -28,22 +33,33 @@ import { api } from '../../../services/api';
 
 export default function PlaylistDetailScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors, typography } = useTheme();
+  const coverSize = Math.min(Math.max(Math.round(width * 0.56), 172), 260);
+  const bottomSpacer = Math.max(insets.bottom, 24) + Spacing.lg;
   const styles = useMemo(
-    () => createStyles(colors, typography),
-    [colors, typography]
+    () => createStyles(colors, typography, coverSize, bottomSpacer),
+    [colors, typography, coverSize, bottomSpacer]
   );
   const { allPlaylists, savedIds, toggleSavePlaylist } = useLibrary();
   const { playTrack, currentTrack, isPlaying, togglePlayPause, addToQueue } =
     usePlayer();
   const [refreshing, setRefreshing] = useState(false);
+  const forceCuratedRefreshRef = useRef(false);
 
   const localPlaylist = useMemo(
     () => allPlaylists.find((p) => p.id === id) ?? null,
     [allPlaylists, id]
   );
   const shouldFetchRemote = Boolean(id && !localPlaylist && /^\d+$/.test(id));
+  const shouldResolveCurated = Boolean(
+    localPlaylist &&
+      localPlaylist.tracks.length === 0 &&
+      localPlaylist.trackQueries &&
+      localPlaylist.trackQueries.length > 0
+  );
 
   const fetchRemotePlaylist = useCallback(
     () => api.getPlaylist(id ?? ''),
@@ -51,17 +67,55 @@ export default function PlaylistDetailScreen() {
   );
   const {
     data: remotePlaylist,
-    loading,
-    error,
-    reload,
+    loading: loadingRemote,
+    error: remoteError,
+    reload: reloadRemote,
   } = useFetch(fetchRemotePlaylist, { enabled: shouldFetchRemote });
 
-  const playlist = localPlaylist ?? remotePlaylist;
+  const fetchCuratedTracks = useCallback(() => {
+    const force = forceCuratedRefreshRef.current;
+    forceCuratedRefreshRef.current = false;
+    return api.resolvePlaylistTracks(
+      localPlaylist?.id ?? '',
+      localPlaylist?.trackQueries ?? [],
+      force
+    );
+  }, [localPlaylist?.id, localPlaylist?.trackQueries]);
+
+  const {
+    data: curatedTracks,
+    loading: loadingCurated,
+    error: curatedError,
+    reload: reloadCurated,
+  } = useFetch(fetchCuratedTracks, { enabled: shouldResolveCurated });
+
+  const basePlaylist = localPlaylist ?? remotePlaylist;
+  const cachedCuratedTracks =
+    shouldResolveCurated && localPlaylist
+      ? api.getCachedPlaylistTracks(localPlaylist.id)
+      : undefined;
+
+  const playlist = useMemo(() => {
+    if (!basePlaylist) return null;
+    if (!shouldResolveCurated) return basePlaylist;
+
+    const tracks = curatedTracks ?? cachedCuratedTracks ?? [];
+    return {
+      ...basePlaylist,
+      tracks,
+      tracksCount: tracks.length > 0 ? tracks.length : basePlaylist.tracksCount,
+    };
+  }, [basePlaylist, cachedCuratedTracks, curatedTracks, shouldResolveCurated]);
 
   const handleRefresh = async () => {
-    if (!shouldFetchRemote) return;
+    if (!shouldFetchRemote && !shouldResolveCurated) return;
     setRefreshing(true);
-    await reload();
+    if (shouldFetchRemote) {
+      await reloadRemote();
+    } else if (shouldResolveCurated) {
+      forceCuratedRefreshRef.current = true;
+      await reloadCurated();
+    }
     setRefreshing(false);
   };
 
@@ -74,7 +128,7 @@ export default function PlaylistDetailScreen() {
     );
   }
 
-  if (shouldFetchRemote && (loading || error || !playlist)) {
+  if (shouldFetchRemote && (loadingRemote || remoteError || !playlist)) {
     return (
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.topBar}>
@@ -97,14 +151,14 @@ export default function PlaylistDetailScreen() {
           </Pressable>
         </View>
         <StateView
-          loading={loading}
-          error={error}
+          loading={loadingRemote}
+          error={remoteError}
           isEmpty={!playlist}
           loadingLabel="Carregando playlist da Deezer..."
           emptyTitle="Playlist não encontrada"
           emptyDescription="Não localizamos faixas para essa playlist."
           onRetry={() => {
-            void reload();
+            void reloadRemote();
           }}
         >
           {null}
@@ -161,7 +215,7 @@ export default function PlaylistDetailScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          shouldFetchRemote ? (
+          shouldFetchRemote || shouldResolveCurated ? (
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
@@ -257,7 +311,7 @@ export default function PlaylistDetailScreen() {
               </View>
 
               {/* Botão de Play Verde Circular */}
-              <Pressable
+              <ScalePressable
                 style={styles.playButton}
                 onPress={handlePlayFirst}
                 accessibilityRole="button"
@@ -277,14 +331,31 @@ export default function PlaylistDetailScreen() {
                   tintColor={colors.onPrimary}
                   type="hierarchical"
                 />
-              </Pressable>
+              </ScalePressable>
             </View>
           </>
         }
         ListEmptyComponent={
-          <Text style={styles.emptyTracks}>
-            Esta playlist ainda não possui faixas disponíveis.
-          </Text>
+          shouldResolveCurated ? (
+            <StateView
+              loading={loadingCurated && playlist.tracks.length === 0}
+              error={playlist.tracks.length === 0 ? curatedError : null}
+              isEmpty={playlist.tracks.length === 0}
+              loadingLabel="Buscando faixas reproduzíveis na Deezer..."
+              emptyTitle="Nenhuma faixa disponível"
+              emptyDescription="Não encontramos prévias de áudio para esta playlist."
+              onRetry={() => {
+                forceCuratedRefreshRef.current = true;
+                void reloadCurated();
+              }}
+            >
+              {null}
+            </StateView>
+          ) : (
+            <Text style={styles.emptyTracks}>
+              Esta playlist ainda não possui faixas disponíveis.
+            </Text>
+          )
         }
         renderItem={({ item: track, index }) => {
           const isThisTrackSelected = currentTrack?.id === track.id;
@@ -299,14 +370,24 @@ export default function PlaylistDetailScreen() {
               accessibilityRole="button"
               accessibilityLabel={`Tocar ${track.title} de ${track.artist}`}
             >
-              <Text
-                style={[
-                  styles.trackIndex,
-                  isThisTrackSelected && styles.trackIndexActive,
-                ]}
-              >
-                {index + 1}
-              </Text>
+              {isThisTrackSelected && isPlaying ? (
+                <View style={styles.trackIndexEq}>
+                  <PlayingEqualizer
+                    isPlaying={isPlaying}
+                    color={colors.primary}
+                    size={13}
+                  />
+                </View>
+              ) : (
+                <Text
+                  style={[
+                    styles.trackIndex,
+                    isThisTrackSelected && styles.trackIndexActive,
+                  ]}
+                >
+                  {index + 1}
+                </Text>
+              )}
 
               <Image
                 source={{ uri: track.coverUrl }}
@@ -370,7 +451,12 @@ export default function PlaylistDetailScreen() {
   );
 }
 
-function createStyles(colors: ThemeColors, typography: ThemeTypography) {
+function createStyles(
+  colors: ThemeColors,
+  typography: ThemeTypography,
+  coverSize: number,
+  bottomSpacer: number
+) {
   return StyleSheet.create({
     safeArea: {
       flex: 1,
@@ -393,16 +479,19 @@ function createStyles(colors: ThemeColors, typography: ThemeTypography) {
     },
     content: {
       paddingHorizontal: Spacing.md,
-      paddingBottom: 110,
+      paddingBottom: bottomSpacer,
       flexGrow: 1,
+      width: '100%',
+      maxWidth: 640,
+      alignSelf: 'center',
     },
     coverWrapper: {
       alignItems: 'center',
       marginVertical: Spacing.lg,
     },
     coverImage: {
-      width: 220,
-      height: 220,
+      width: coverSize,
+      height: coverSize,
       borderRadius: Radius.md,
       backgroundColor: colors.surfaceCard,
       ...Shadows.hero,
@@ -464,6 +553,11 @@ function createStyles(colors: ThemeColors, typography: ThemeTypography) {
       color: colors.textSecondary,
       width: 28,
       textAlign: 'center',
+    },
+    trackIndexEq: {
+      width: 28,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     trackIndexActive: {
       color: colors.primary,

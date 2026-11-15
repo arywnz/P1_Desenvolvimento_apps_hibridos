@@ -16,7 +16,9 @@ import {
   type ThemeTypography,
 } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
+import { usePlayer } from '../../context/PlayerContext';
 import { useTheme } from '../../context/ThemeContext';
+import { resolveUserAvatar } from '../../utils/userAvatar';
 
 const FRIEND_PLAYLISTS = FRIENDS_ACTIVITY.flatMap((friend) =>
   friend.playlists.map((playlist) => ({
@@ -30,6 +32,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, signOut } = useAuth();
+  const { stopPlayback } = usePlayer();
   const { colors, typography } = useTheme();
   const styles = useMemo(
     () => createStyles(colors, typography),
@@ -70,9 +73,7 @@ export default function ProfileScreen() {
         {/* Cabeçalho do Perfil */}
         <View style={styles.profileHeader}>
           <Image
-            source={
-              USER_PROFILE.avatarSource ?? { uri: USER_PROFILE.avatarUrl }
-            }
+            source={resolveUserAvatar(user)}
             style={styles.avatar}
             contentFit="cover"
           />
@@ -150,7 +151,9 @@ export default function ProfileScreen() {
               <Text style={styles.menuTitle}>Premium</Text>
             </View>
             <View style={styles.premiumBadge}>
-              <Text style={styles.premiumBadgeText}>{USER_PROFILE.plan}</Text>
+              <Text style={styles.premiumBadgeText}>
+                {user?.plan ?? USER_PROFILE.plan}
+              </Text>
             </View>
           </Pressable>
 
@@ -287,6 +290,7 @@ export default function ProfileScreen() {
           <Pressable
             style={styles.menuRow}
             onPress={() => {
+              stopPlayback();
               signOut();
               router.replace('/login');
             }}
@@ -350,6 +354,7 @@ export default function ProfileScreen() {
           </ScrollView>
         </View>
 
+        {FRIEND_PLAYLISTS.length > 0 && (
         <View style={styles.friendPlaylistsSection}>
           <Text style={styles.friendPlaylistsTitle}>Playlists dos amigos</Text>
           <ScrollView
@@ -396,6 +401,7 @@ export default function ProfileScreen() {
             ))}
           </ScrollView>
         </View>
+        )}
 
         {/* Seção de Mensagens */}
         <View style={styles.messagesSection}>
