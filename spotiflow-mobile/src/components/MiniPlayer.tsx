@@ -2,7 +2,14 @@ import { Image } from 'expo-image';
 import { useRouter, useSegments } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useMemo } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Radius,
@@ -19,8 +26,16 @@ export function MiniPlayer() {
   const segments = useSegments();
   const insets = useSafeAreaInsets();
   const { colors, typography } = useTheme();
-  const { currentTrack, isPlaying, togglePlayPause, toggleLike, positionSeconds } =
-    usePlayer();
+  const {
+    currentTrack,
+    isPlaying,
+    isBuffering,
+    hasPreview,
+    positionSeconds,
+    durationSeconds,
+    togglePlayPause,
+    toggleLike,
+  } = usePlayer();
 
   const tabBarHeight = 60 + Math.max(insets.bottom, 12);
   const bottomOffset =
@@ -38,8 +53,10 @@ export function MiniPlayer() {
 
   if (!currentTrack || isCreateScreen || isPlayerScreen) return null;
 
-  const progressPercent =
-    (positionSeconds / (currentTrack.durationSeconds || 1)) * 100;
+  const progressPercent = Math.min(
+    100,
+    Math.max(0, (positionSeconds / (durationSeconds || 1)) * 100)
+  );
 
   return (
     <View style={styles.container}>
@@ -60,7 +77,7 @@ export function MiniPlayer() {
             {currentTrack.title}
           </Text>
           <Text style={styles.artist} numberOfLines={1}>
-            {currentTrack.artist}
+            {hasPreview ? currentTrack.artist : `${currentTrack.artist} • Sem prévia`}
           </Text>
         </View>
 
@@ -117,16 +134,20 @@ export function MiniPlayer() {
             accessibilityRole="button"
             accessibilityLabel={isPlaying ? 'Pausar' : 'Reproduzir'}
           >
-            <SymbolView
-              name={{
-                ios: isPlaying ? 'pause.fill' : 'play.fill',
-                android: isPlaying ? 'pause' : 'play_arrow',
-                web: isPlaying ? 'pause' : 'play_arrow',
-              }}
-              size={24}
-              tintColor={colors.playerTextPrimary}
-              type="hierarchical"
-            />
+            {isBuffering ? (
+              <ActivityIndicator size="small" color={colors.playerTextPrimary} />
+            ) : (
+              <SymbolView
+                name={{
+                  ios: isPlaying ? 'pause.fill' : 'play.fill',
+                  android: isPlaying ? 'pause' : 'play_arrow',
+                  web: isPlaying ? 'pause' : 'play_arrow',
+                }}
+                size={24}
+                tintColor={colors.playerTextPrimary}
+                type="hierarchical"
+              />
+            )}
           </Pressable>
         </View>
       </Pressable>

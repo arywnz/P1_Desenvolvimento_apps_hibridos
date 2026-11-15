@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -32,6 +33,10 @@ export default function PlayerScreen() {
     currentTrack,
     isPlaying,
     positionSeconds,
+    durationSeconds,
+    isBuffering,
+    hasPreview,
+    audioError,
     isShuffle,
     isRepeat,
     nextTrack,
@@ -53,8 +58,13 @@ export default function PlayerScreen() {
 
   if (!currentTrack) return null;
 
-  const totalSeconds = currentTrack.durationSeconds || 214;
-  const progressRatio = Math.min(positionSeconds / totalSeconds, 1);
+  const totalSeconds = hasPreview
+    ? durationSeconds || 30
+    : currentTrack.durationSeconds || 214;
+  const progressRatio = Math.min(
+    Math.max(positionSeconds / (totalSeconds || 1), 0),
+    1
+  );
 
   const formatTime = (secs: number) => {
     const minutes = Math.floor(secs / 60);
@@ -187,6 +197,18 @@ export default function PlayerScreen() {
           </Pressable>
         </View>
 
+        <View style={styles.audioStatusRow}>
+          <Text style={styles.audioStatusText}>
+            {audioError
+              ? `Erro ao reproduzir prévia: ${audioError}`
+              : !hasPreview
+                ? 'Faixa demonstrativa local sem áudio — toque numa música da Deezer'
+                : isBuffering
+                  ? 'Carregando prévia de áudio...'
+                  : 'Prévia de 30s • Deezer'}
+          </Text>
+        </View>
+
         {/* Barra de Progresso com Marcação de Tempo */}
         <View style={styles.progressSection}>
           <Pressable
@@ -212,7 +234,9 @@ export default function PlayerScreen() {
 
           <View style={styles.timeLabelsRow}>
             <Text style={styles.timeText}>{formatTime(positionSeconds)}</Text>
-            <Text style={styles.timeText}>{currentTrack.duration}</Text>
+            <Text style={styles.timeText}>
+              {hasPreview ? formatTime(totalSeconds) : currentTrack.duration}
+            </Text>
           </View>
         </View>
 
@@ -262,16 +286,20 @@ export default function PlayerScreen() {
             accessibilityRole="button"
             accessibilityLabel={isPlaying ? 'Pausar' : 'Reproduzir'}
           >
-            <SymbolView
-              name={{
-                ios: isPlaying ? 'pause.fill' : 'play.fill',
-                android: isPlaying ? 'pause' : 'play_arrow',
-                web: isPlaying ? 'pause' : 'play_arrow',
-              }}
-              size={36}
-              tintColor={colors.playerPlayIcon}
-              type="hierarchical"
-            />
+            {isBuffering ? (
+              <ActivityIndicator size="small" color={colors.playerPlayIcon} />
+            ) : (
+              <SymbolView
+                name={{
+                  ios: isPlaying ? 'pause.fill' : 'play.fill',
+                  android: isPlaying ? 'pause' : 'play_arrow',
+                  web: isPlaying ? 'pause' : 'play_arrow',
+                }}
+                size={36}
+                tintColor={colors.playerPlayIcon}
+                type="hierarchical"
+              />
+            )}
           </Pressable>
 
           <Pressable
@@ -433,7 +461,15 @@ function createStyles(
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginBottom: Spacing.lg,
+      marginBottom: Spacing.sm,
+    },
+    audioStatusRow: {
+      marginBottom: Spacing.md,
+    },
+    audioStatusText: {
+      ...typography.caption,
+      color: colors.playerTextMuted,
+      fontSize: 12,
     },
     trackTextGroup: {
       flex: 1,
