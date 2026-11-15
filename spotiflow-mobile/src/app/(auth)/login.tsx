@@ -2,6 +2,7 @@ import { Link, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -24,22 +25,40 @@ import { useTheme } from '../../context/ThemeContext';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { signIn } = useAuth();
+  const { loginWithApi, signIn } = useAuth();
   const { colors, typography } = useTheme();
   const styles = useMemo(
     () => createStyles(colors, typography),
     [colors, typography]
   );
 
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const executeApiLogin = async (userInput: string, passInput: string) => {
+    setSubmitting(true);
+    setErrorMessage(null);
+    try {
+      await loginWithApi(userInput, passInput);
+      router.replace('/');
+    } catch (err) {
+      setErrorMessage(
+        err instanceof Error
+          ? err.message
+          : 'Não foi possível autenticar na API.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleLogin = () => {
-    const trimmedEmail = email.trim();
-    if (!trimmedEmail) {
-      setErrorMessage('Informe seu e-mail ou nome de usuário.');
+    const trimmedUser = username.trim();
+    if (!trimmedUser) {
+      setErrorMessage('Informe seu usuário (ex.: emilys).');
       return;
     }
     if (password.trim().length < 4) {
@@ -47,12 +66,16 @@ export default function LoginScreen() {
       return;
     }
 
-    setErrorMessage(null);
-    signIn({ email: trimmedEmail });
-    router.replace('/');
+    void executeApiLogin(trimmedUser, password);
   };
 
-  const handleDemoLogin = () => {
+  const handleTestApiLogin = () => {
+    setUsername('emilys');
+    setPassword('emilyspass');
+    void executeApiLogin('emilys', 'emilyspass');
+  };
+
+  const handleOfflineDemo = () => {
     setErrorMessage(null);
     signIn({
       email: 'jao.estudante@univassouras.edu.br',
@@ -94,19 +117,19 @@ export default function LoginScreen() {
 
           <View style={styles.formCard}>
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>E-mail ou usuário</Text>
+              <Text style={styles.label}>Usuário (API DummyJSON)</Text>
               <TextInput
                 style={styles.input}
-                value={email}
+                value={username}
                 onChangeText={(text) => {
-                  setEmail(text);
+                  setUsername(text);
                   if (errorMessage) setErrorMessage(null);
                 }}
-                placeholder="seu.email@univassouras.edu.br"
+                placeholder="ex.: emilys"
                 placeholderTextColor={colors.textMuted}
                 autoCapitalize="none"
                 autoCorrect={false}
-                keyboardType="email-address"
+                editable={!submitting}
                 returnKeyType="next"
               />
             </View>
@@ -121,16 +144,18 @@ export default function LoginScreen() {
                     setPassword(text);
                     if (errorMessage) setErrorMessage(null);
                   }}
-                  placeholder="Digite sua senha"
+                  placeholder="ex.: emilyspass"
                   placeholderTextColor={colors.textMuted}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
+                  editable={!submitting}
                   returnKeyType="done"
                   onSubmitEditing={handleLogin}
                 />
                 <Pressable
                   onPress={() => setShowPassword((prev) => !prev)}
                   hitSlop={8}
+                  disabled={submitting}
                   accessibilityRole="button"
                   accessibilityLabel={
                     showPassword ? 'Ocultar senha' : 'Mostrar senha'
@@ -150,6 +175,10 @@ export default function LoginScreen() {
               </View>
             </View>
 
+            <Text style={styles.helperHint}>
+              Credencial pública para teste POST: emilys / emilyspass
+            </Text>
+
             {errorMessage && (
               <View style={styles.errorBox}>
                 <SymbolView
@@ -167,22 +196,46 @@ export default function LoginScreen() {
             )}
 
             <Pressable
-              style={styles.primaryButton}
+              style={[
+                styles.primaryButton,
+                submitting && styles.buttonDisabled,
+              ]}
               onPress={handleLogin}
+              disabled={submitting}
               accessibilityRole="button"
-              accessibilityLabel="Entrar no aplicativo"
+              accessibilityLabel="Entrar com API"
             >
-              <Text style={styles.primaryButtonText}>Entrar</Text>
+              {submitting ? (
+                <ActivityIndicator color={colors.onPrimary} />
+              ) : (
+                <Text style={styles.primaryButtonText}>Entrar</Text>
+              )}
             </Pressable>
 
             <Pressable
-              style={styles.secondaryButton}
-              onPress={handleDemoLogin}
+              style={[
+                styles.secondaryButton,
+                submitting && styles.buttonDisabled,
+              ]}
+              onPress={handleTestApiLogin}
+              disabled={submitting}
               accessibilityRole="button"
-              accessibilityLabel="Entrar com conta de demonstração"
+              accessibilityLabel="Entrar com conta de teste na API"
             >
               <Text style={styles.secondaryButtonText}>
-                Entrar com conta demo
+                Entrar com conta de teste (API)
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.textButton}
+              onPress={handleOfflineDemo}
+              disabled={submitting}
+              accessibilityRole="button"
+              accessibilityLabel="Entrar em modo demonstração local"
+            >
+              <Text style={styles.textButtonLabel}>
+                Entrar em modo demonstração (sem rede)
               </Text>
             </Pressable>
           </View>
@@ -286,6 +339,10 @@ function createStyles(colors: ThemeColors, typography: ThemeTypography) {
       fontSize: 14,
       height: '100%',
     },
+    helperHint: {
+      ...typography.caption,
+      color: colors.textMuted,
+    },
     errorBox: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -326,6 +383,18 @@ function createStyles(colors: ThemeColors, typography: ThemeTypography) {
       color: colors.textPrimary,
       fontSize: 14,
       fontWeight: '600',
+    },
+    textButton: {
+      alignItems: 'center',
+      paddingVertical: Spacing.xs,
+    },
+    textButtonLabel: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      fontWeight: '600',
+    },
+    buttonDisabled: {
+      opacity: 0.65,
     },
     footerRow: {
       flexDirection: 'row',

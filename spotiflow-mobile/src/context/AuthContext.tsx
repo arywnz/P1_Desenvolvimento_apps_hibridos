@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 import { USER_PROFILE } from '../constants/mockData';
+import { api } from '../services/api';
 
 export interface AuthUser {
   id: string;
@@ -17,8 +18,10 @@ export interface AuthUser {
 }
 
 interface SignInPayload {
+  id?: string;
   email: string;
   name?: string;
+  avatarUrl?: string;
   token?: string;
 }
 
@@ -33,6 +36,7 @@ interface AuthContextData {
   isAuthenticated: boolean;
   isReady: boolean;
   signIn: (payload: SignInPayload) => void;
+  loginWithApi: (username: string, password: string) => Promise<void>;
   register: (payload: RegisterPayload) => void;
   signOut: () => void;
 }
@@ -48,29 +52,56 @@ function formatNameFromEmail(email: string): string {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Aula 8: sessao mantida em memoria.
-  // Aula 10: hidratar usuario via storage + token via SecureStore ao iniciar e liberar SplashScreen com isReady = true.
+  // Aula 8/9: sessão mantida em memória e autenticada via POST na DummyJSON.
+  // Aula 10: hidratar usuário via AsyncStorage + token via SecureStore ao iniciar e liberar SplashScreen com isReady = true.
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isReady] = useState(true);
 
-  const signIn = useCallback(({ email, name, token: sessionToken }: SignInPayload) => {
-    const cleanEmail = email.trim().toLowerCase();
-    const resolvedName =
-      name?.trim() ||
-      (cleanEmail === 'jao.estudante@univassouras.edu.br'
-        ? USER_PROFILE.name
-        : formatNameFromEmail(cleanEmail));
+  const signIn = useCallback(
+    ({ id, email, name, avatarUrl, token: sessionToken }: SignInPayload) => {
+      const cleanEmail = email.trim().toLowerCase();
+      const resolvedName =
+        name?.trim() ||
+        (cleanEmail === 'jao.estudante@univassouras.edu.br'
+          ? USER_PROFILE.name
+          : formatNameFromEmail(cleanEmail));
 
-    setUser({
-      id: `user-${cleanEmail}`,
-      name: resolvedName,
-      email: cleanEmail,
-      plan: USER_PROFILE.plan,
-      avatarUrl: USER_PROFILE.avatarUrl,
-    });
-    setToken(sessionToken ?? null);
-  }, []);
+      setUser({
+        id: id ?? `user-${cleanEmail}`,
+        name: resolvedName,
+        email: cleanEmail,
+        plan: USER_PROFILE.plan,
+        avatarUrl: avatarUrl || USER_PROFILE.avatarUrl,
+      });
+      setToken(sessionToken ?? null);
+    },
+    []
+  );
+
+  const loginWithApi = useCallback(
+    async (username: string, password: string) => {
+      const response = await api.login({
+        username: username.trim(),
+        password,
+      });
+
+      const fullName =
+        `${response.firstName} ${response.lastName}`.trim() ||
+        response.username;
+
+      // Aula 10: salvar também em storage (dados do usuário) e SecureStore (response.accessToken).
+      setUser({
+        id: String(response.id),
+        name: fullName,
+        email: response.email,
+        plan: USER_PROFILE.plan,
+        avatarUrl: response.image || USER_PROFILE.avatarUrl,
+      });
+      setToken(response.accessToken);
+    },
+    []
+  );
 
   const register = useCallback(({ name, email }: RegisterPayload) => {
     const cleanEmail = email.trim().toLowerCase();
@@ -85,7 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(() => {
-    // Aula 10: limpar tambem storage/SecureStore no logout.
+    // Aula 10: limpar também AsyncStorage e SecureStore no logout.
     setUser(null);
     setToken(null);
   }, []);
@@ -97,10 +128,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: Boolean(user),
       isReady,
       signIn,
+      loginWithApi,
       register,
       signOut,
     }),
-    [user, token, isReady, signIn, register, signOut]
+    [user, token, isReady, signIn, loginWithApi, register, signOut]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
